@@ -92,40 +92,61 @@ def index():
     return "Decoding App"
 
 
-@app.route('/web_decode')
-def web_decode():
-  with tf.Session() as sess:
-    # Decode from input.
-    sentence = "Краска"
-    # Get token-ids for the input sentence.
-    token_ids = data_utils.sentence_to_token_ids(sentence, in_vocab)
-    # Which bucket does it belong to?
-    bucket_id = min([b for b in xrange(len(_buckets))
-                       if _buckets[b][0] > len(token_ids)])
-    # Get a 1-element batch to feed the sentence to the model.
-    encoder_inputs, decoder_inputs, target_weights = model.get_batch(
-          {bucket_id: [(token_ids, [])]}, bucket_id)
-    # Get output logits for the sentence.
-    _, _, output_logits = model.step(sess, encoder_inputs, decoder_inputs,
-                                       target_weights, bucket_id, True)
-    # This is a greedy decoder - outputs are just argmaxes of output_logits.
-    outputs = [int(np.argmax(logit, axis=1)) for logit in output_logits]
-    # If there is an EOS symbol in outputs, cut them at that point.
-    if data_utils.EOS_ID in outputs:
-        outputs = outputs[:outputs.index(data_utils.EOS_ID)]
-    # Print out OUTPUT sentence corresponding to outputs.
-    print((" ".join([rev_out_vocab[output] for output in outputs])).decode("utf-8"))
-    print("> ", end="")
-    sentence = ""
-    return "web_decode_end"
+@app.route('/web_decode/<sentence>')
+def web_decode(sentence):
+  # with tf.Session() as sess: //// метод try catch, здесь не используется,так как необходимы глобальные переменные на приложение
+  
+  # тестовый набор данных
+  # sentence = "Краска" # - old variant
+  # token_ids = data_utils.sentence_to_token_ids('Краска', in_vocab)
+  # print ("эталонный айди для Краска")
+  # print (token_ids)
+  
+  #сначала надо перекодировать в utf-8 приходящий запрос, потому что словарь записан в этом формате
+  sentence = sentence.encode('utf8')
+  # Get token-ids for the input sentence.
+  token_ids = data_utils.sentence_to_token_ids(sentence, in_vocab)
+  #для справки выводим токены введёного текста
+  print ("current token for")
+  print (sentence)
+  print (token_ids)
+  
+  # Which bucket does it belong to?
+  bucket_id = min([b for b in xrange(len(_buckets))
+                     if _buckets[b][0] > len(token_ids)])
+  # Get a 1-element batch to feed the sentence to the model.
+  encoder_inputs, decoder_inputs, target_weights = model.get_batch(
+        {bucket_id: [(token_ids, [])]}, bucket_id)
+  # Get output logits for the sentence.
+  _, _, output_logits = model.step(sess, encoder_inputs, decoder_inputs,
+                                     target_weights, bucket_id, True)
+  # This is a greedy decoder - outputs are just argmaxes of output_logits.
+  outputs = [int(np.argmax(logit, axis=1)) for logit in output_logits]
+  # If there is an EOS symbol in outputs, cut them at that point.
+  if data_utils.EOS_ID in outputs:
+      outputs = outputs[:outputs.index(data_utils.EOS_ID)]
+  # Print out OUTPUT sentence corresponding to outputs.
+  retValue = (" ".join([rev_out_vocab[output] for output in outputs])).decode("utf-8")
+  print (sentence)
+  print(retValue)
+  print("> ", end="")
+  sentence = ""
+  # return "web_decode_end"
+  # будем например возвращать декодированную фразу
+  return retValue
 
 
 def onstart():
-    with tf.Session() as sess:
-       # Create model and load parameters.
-       print("load model")
-       model = create_model(sess, True)
-       model.batch_size = 1  # We decode one sentence at a time.
+  #Создаем глобальные переменные (сессия тенсорфлоу и обрабатывающая модель)
+  global sess
+  sess = tf.Session()
+  global model
+  # with tf.Session() as sess: //// метод try catch, здесь не используется,так как необходимы глобальные переменные на приложение
+
+  # Create model and load parameters.
+  print("load model")
+  model = create_model(sess, True)
+  model.batch_size = 1  # We decode one sentence at a time.
     
 
 if __name__ == "__main__":
