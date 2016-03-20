@@ -19,6 +19,8 @@ from __future__ import division
 from __future__ import print_function
 
 from flask import Flask
+from flask import render_template
+from flask import request, jsonify
 
 import math
 import os
@@ -87,29 +89,31 @@ def create_model(session, forward_only):
   return model
 
 	
+
 @app.route('/')
+@app.route('/index')
+@app.route('/index.html')
 def index():
-    return "Decoding App"
+    return render_template("index.html")
 
 
-@app.route('/web_decode/<sentence>')
-def web_decode(sentence):
+# @app.route('/web_decode/<sentence>') # стрый метод через path
+@app.route('/web_decode', methods=['POST']) # метод через json
+def web_decode():
   # with tf.Session() as sess: //// метод try catch, здесь не используется,так как необходимы глобальные переменные на приложение
   
-  # тестовый набор данных
-  # sentence = "Краска" # - old variant
-  # token_ids = data_utils.sentence_to_token_ids('Краска', in_vocab)
-  # print ("эталонный айди для Краска")
-  # print (token_ids)
+  # получаем из запроса нужную строку
+  content = request.json
+  sentence = content['query']
   
   #сначала надо перекодировать в utf-8 приходящий запрос, потому что словарь записан в этом формате
   sentence = sentence.encode('utf8')
   # Get token-ids for the input sentence.
   token_ids = data_utils.sentence_to_token_ids(sentence, in_vocab)
   #для справки выводим токены введёного текста
-  print ("current token for")
-  print (sentence)
-  print (token_ids)
+  print("Input sentence:")
+  print(sentence)
+  print(token_ids)
   
   # Which bucket does it belong to?
   bucket_id = min([b for b in xrange(len(_buckets))
@@ -125,15 +129,15 @@ def web_decode(sentence):
   # If there is an EOS symbol in outputs, cut them at that point.
   if data_utils.EOS_ID in outputs:
       outputs = outputs[:outputs.index(data_utils.EOS_ID)]
+  
   # Print out OUTPUT sentence corresponding to outputs.
   retValue = (" ".join([rev_out_vocab[output] for output in outputs])).decode("utf-8")
-  print (sentence)
+  print("Output sentence:")
   print(retValue)
-  print("> ", end="")
-  sentence = ""
-  # return "web_decode_end"
-  # будем например возвращать декодированную фразу
-  return retValue
+  
+  # return retValue # будем например возвращать декодированную фразу в виде строки
+  return jsonify(answer=retValue) # возвращаем в виде json
+  
 
 
 def onstart():
@@ -144,7 +148,7 @@ def onstart():
   # with tf.Session() as sess: //// метод try catch, здесь не используется,так как необходимы глобальные переменные на приложение
 
   # Create model and load parameters.
-  print("load model")
+  print("Load model")
   model = create_model(sess, True)
   model.batch_size = 1  # We decode one sentence at a time.
     
