@@ -1,0 +1,1 @@
+python app2web.py --data_dir /home/user/datasets/text_editor_v3/ --train_dir /home/user/datasets/text_editor_v3/checkpoints/ --size=512
