@@ -105,19 +105,19 @@ def read_data(source_path, target_path, max_size=None):
 
 def create_model(session, forward_only):
   """Create model and initialize or load parameters in session."""
-  # with tf.device('/cpu:0'):
-  model = seq2seq_model.Seq2SeqModel(
-      FLAGS.in_vocab_size, FLAGS.out_vocab_size, _buckets,
-      FLAGS.size, FLAGS.num_layers, FLAGS.max_gradient_norm, FLAGS.batch_size,
-      FLAGS.learning_rate, FLAGS.learning_rate_decay_factor,
-      forward_only=forward_only)
-  ckpt = tf.train.get_checkpoint_state(FLAGS.train_dir)
-  if ckpt and tf.gfile.Exists(ckpt.model_checkpoint_path):
-    print("Reading model parameters from %s" % ckpt.model_checkpoint_path)
-    model.saver.restore(session, ckpt.model_checkpoint_path)
-  else:
-    print("Created model with fresh parameters.")
-    session.run(tf.initialize_all_variables())
+  with tf.device('/cpu:0'):
+    model = seq2seq_model.Seq2SeqModel(
+        FLAGS.in_vocab_size, FLAGS.out_vocab_size, _buckets,
+        FLAGS.size, FLAGS.num_layers, FLAGS.max_gradient_norm, FLAGS.batch_size,
+        FLAGS.learning_rate, FLAGS.learning_rate_decay_factor,
+        forward_only=forward_only)
+    ckpt = tf.train.get_checkpoint_state(FLAGS.train_dir)
+    if ckpt and tf.gfile.Exists(ckpt.model_checkpoint_path):
+      print("Reading model parameters from %s" % ckpt.model_checkpoint_path)
+      model.saver.restore(session, ckpt.model_checkpoint_path)
+    else:
+      print("Created model with fresh parameters.")
+      session.run(tf.initialize_all_variables())
   return model
 
 
@@ -214,7 +214,7 @@ def decode():
     sentence = sys.stdin.readline()
     while sentence:
       # Get token-ids for the input sentence.
-      token_ids = data_utils.sentence_to_token_ids(sentence, in_vocab, normalize_digits=False)
+      token_ids = data_utils.sentence_to_token_ids(sentence, in_vocab)
       # Which bucket does it belong to?
       bucket_id = min([b for b in xrange(len(_buckets))
                        if _buckets[b][0] > len(token_ids)])

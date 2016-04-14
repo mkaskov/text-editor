@@ -1,0 +1,22 @@
+<div class="container" cg-busy="{promise:myPromise,message:'Loading',backdrop:true,templateUrl:'static/template/modalBusy_anim.html'}">
+	<div>
+		<h1>Deep Learning Text Editor Algoritm - Demo</h1>
+	</div>
+	<div class="form-group row" style="margin-top: 20px">
+		<div class="col-lg-10">
+			<textarea class="form-control" rows="5" id="textArea1" name='textArea1'  ng-model="textObj.areaText1"></textarea>
+			<span class="help-block">Введите текст и нажмите "Преобразовать" или клавишу Enter</span>
+		</div>
+	</div>
+	<div>
+		<a class="btn btn-primary btn-lg" ng-click="convertText()">Преобразовать</a>
+		<a class="btn btn-primary btn-lg" ng-click="convertText(1)">Пример 1</a>
+		<a class="btn btn-primary btn-lg" ng-click="convertText(2)">Пример 2</a>
+	</div>
+	<div class="form-group row" style="margin-top: 20px">
+		<div class="col-lg-10">
+			<textarea class="form-control" rows="5" id="textArea2" ng-model="textObj.areaText2"></textarea>
+				<span class="help-block">Преобразованный текст</span>
+		</div>
+	</div>
+</div>

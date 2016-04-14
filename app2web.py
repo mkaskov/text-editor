@@ -27,6 +27,7 @@ import os
 import random
 import sys
 import time
+import re
 
 import numpy as np
 from six.moves import xrange  # pylint: disable=redefined-builtin
@@ -63,7 +64,8 @@ FLAGS = tf.app.flags.FLAGS
 
 # We use a number of buckets and pad to the closest one for efficiency.
 # See seq2seq_model.Seq2SeqModel for details of how they work.
-_buckets = [(5, 10), (10, 15), (20, 25), (40, 50)]
+# _buckets = [(5, 10), (10, 15), (20, 25), (40, 50),(50, 60),(60,70),(70,80),(80,90),(90,100)] # Это зачем?
+_buckets = [(5, 10), (10, 15), (30, 35), (50, 60)]
 
 
 # Load vocabularies.
@@ -75,6 +77,7 @@ _, rev_out_vocab = data_utils.initialize_vocabulary(out_vocab_path)
 
 def create_model(session, forward_only):
   """Initialize model or load parameters in session."""
+  # with tf.device('/cpu:0'):
   model = seq2seq_model.Seq2SeqModel(
       FLAGS.in_vocab_size, FLAGS.out_vocab_size, _buckets,
       FLAGS.size, FLAGS.num_layers, FLAGS.max_gradient_norm, FLAGS.batch_size,
@@ -85,31 +88,48 @@ def create_model(session, forward_only):
     print("Reading model parameters from %s" % ckpt.model_checkpoint_path)
     model.saver.restore(session, ckpt.model_checkpoint_path)
   else:
-    print("Error! No model to load!")
+      print("Error! No model to load!")
   return model
 
-	
-
 @app.route('/')
-@app.route('/index')
-@app.route('/index.html')
 def index():
-    return render_template("index.html")
-
-
-# @app.route('/web_decode/<sentence>') # стрый метод через path
-@app.route('/web_decode', methods=['POST']) # метод через json
-def web_decode():
-  # with tf.Session() as sess: //// метод try catch, здесь не используется,так как необходимы глобальные переменные на приложение
-  
-  # получаем из запроса нужную строку
+    return render_template("index.html")   
+          
+@app.route('/decode', methods=['POST'])  # метод через json, принимает запросы в виде массива от клиента  
+def decode():
   content = request.json
-  sentence = content['query']
+  retValue =[]
   
-  #сначала надо перекодировать в utf-8 приходящий запрос, потому что словарь записан в этом формате
-  sentence = sentence.encode('utf8')
-  # Get token-ids for the input sentence.
-  token_ids = data_utils.sentence_to_token_ids(sentence, in_vocab)
+   # Подготовка абзаца текста к распознованию, разбиваем на предложения 
+ # tempSentArray = []
+ # tempSentArray = re.split('\. ', elem['col3']) # необходимо будет переделать паттерн для определения предложений, от этого зависит качество распознаваемого предложения
+ # tempNewSentense = ""
+ 
+ # Прогон разбитого предложения через декодер
+ # for sentElem in tempSentArray:
+  # if len(sentElem.strip())>0:
+   # tempNewSentense += web_decode(sentElem) 
+  
+  
+  for elem in content: 
+   tempSentArray = [] 
+   for inputElem in elem['data']:
+    tempSentArray.append(web_decode(inputElem['input']))
+   tempElem = {"out":tempSentArray}
+   retValue.append(tempElem)
+  
+  return jsonify(answer=retValue)
+
+@app.route('/decode_sentense', methods=['POST'])  # метод через json, принимает запросы в виде строки от клиента  
+def decode_sentense():
+  content = request.json
+  return jsonify(answer=web_decode(content['query']))  
+  
+def web_decode(sentence):
+  # with tf.Session() as sess: //// метод try catch, здесь не используется,так как необходимы глобальные переменные на приложение
+    
+  sentence = sentence.encode('utf8') #сначала надо перекодировать в utf-8 приходящий запрос, потому что словарь записан в этом формате
+  token_ids = data_utils.sentence_to_token_ids(sentence, in_vocab, normalize_digits=False) # Get token-ids for the input sentence.
   #для справки выводим токены введёного текста
   print("Input sentence:")
   print(sentence)
@@ -135,10 +155,7 @@ def web_decode():
   print("Output sentence:")
   print(retValue)
   
-  # return retValue # будем например возвращать декодированную фразу в виде строки
-  return jsonify(answer=retValue) # возвращаем в виде json
-  
-
+  return retValue # будем например возвращать декодированную фразу в виде строки
 
 def onstart():
   #Создаем глобальные переменные (сессия тенсорфлоу и обрабатывающая модель)
@@ -155,4 +172,4 @@ def onstart():
 
 if __name__ == "__main__":
   onstart()
-  app.run(host='0.0.0.0', port=5001, debug=True, use_reloader=False)
+  app.run(host='0.0.0.0', port=5001, debug=True, use_reloader=False,threaded=True)

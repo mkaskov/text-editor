@@ -32,7 +32,7 @@ UNK_ID = 3
 
 # Регулярные выражения, используемые для создания токенов (tokenize).
 # _WORD_SPLIT = re.compile("([.,!?\"':;)(])") # base
-_WORD_SPLIT = re.compile("([,.][ ]+|[!?\"':;)(])") # v2
+_WORD_SPLIT = re.compile("([,.][ ]+|[!?\"':;)(])") # v2 (not tested)
 _DIGIT_RE = re.compile(r"\d") 
 
 
@@ -42,6 +42,16 @@ def basic_tokenizer(sentence):
   for space_separated_fragment in sentence.strip().split():
     words.extend(re.split(_WORD_SPLIT, space_separated_fragment))
   return [w for w in words if w]
+
+
+def basic_tokenizer_2(sentence):
+  """простой токенизер с несколько изменной схемой нарезания слов. Так же как и простой токенизер превращает предложение в список токенов."""
+  sentence = sentence.decode('utf-8')
+  # Снять комментарий, если нужно привести текст к нижнему регистру
+  # sentence = sentence.lower()
+  words = []
+  words = re.findall(ur"[a-zA-Zа-яА-Я()\-]*[^\s^0-9\.,:]|[0-9]|[.,:]", sentence)
+  return [w.encode('utf-8') for w in words if w]  
 
 
 def create_vocabulary(vocabulary_path, data_path, max_vocabulary_size,
@@ -59,7 +69,7 @@ def create_vocabulary(vocabulary_path, data_path, max_vocabulary_size,
     data_path: data file that will be used to create vocabulary.
     max_vocabulary_size: limit on the size of the created vocabulary.
     tokenizer: a function to use to tokenize each data sentence;
-      if None, basic_tokenizer will be used.
+      if None, basic_tokenizer_2 will be used.
     normalize_digits: Boolean; если true, то все цифры заменяются на нуль.
   """
   if not gfile.Exists(vocabulary_path):
@@ -71,7 +81,7 @@ def create_vocabulary(vocabulary_path, data_path, max_vocabulary_size,
         counter += 1
         if counter % 100000 == 0:
           print("  processing line %d" % counter)
-        tokens = tokenizer(line) if tokenizer else basic_tokenizer(line)
+        tokens = tokenizer(line) if tokenizer else basic_tokenizer_2(line)
         for w in tokens:
           word = re.sub(_DIGIT_RE, "0", w) if normalize_digits else w
           if word in vocab:
@@ -84,6 +94,7 @@ def create_vocabulary(vocabulary_path, data_path, max_vocabulary_size,
       with gfile.GFile(vocabulary_path, mode="w") as vocab_file:
         for w in vocab_list:
           vocab_file.write(w + "\n")
+          
 
 
 def initialize_vocabulary(vocabulary_path):
@@ -128,16 +139,18 @@ def sentence_to_token_ids(sentence, vocabulary,
     sentence: a string, the sentence to convert to token-ids.
     vocabulary: a dictionary mapping tokens to integers.
     tokenizer: a function to use to tokenize each sentence;
-      if None, basic_tokenizer will be used.
+      if None, basic_tokenizer_2 will be used.
 	normalize_digits: Boolean; если true, то все цифры заменяются на нуль.
 
   Returns:
     a list of integers, the token-ids for the sentence.
   """
   if tokenizer:
-    words = tokenizer(sentence)
-  else:
     words = basic_tokenizer(sentence)
+  else:
+    words = basic_tokenizer_2(sentence)
+    # for elem in words:
+      # print (elem)
   if not normalize_digits:
     return [vocabulary.get(w, UNK_ID) for w in words]
   # Normalize digits by 0 before looking words up in the vocabulary.
@@ -157,7 +170,7 @@ def data_to_token_ids(data_path, target_path, vocabulary_path,
     target_path: path where the file with token-ids will be created.
     vocabulary_path: path to the vocabulary file.
     tokenizer: a function to use to tokenize each sentence;
-      if None, basic_tokenizer will be used.
+      if None, basic_tokenizer_2 will be used.
     normalize_digits: Boolean; если true, то все цифры заменяются на нуль.
   """
   if not gfile.Exists(target_path):
@@ -201,20 +214,20 @@ def prepare_data(data_dir, in_vocabulary_size, out_vocabulary_size):
   # Create vocabularies of the appropriate sizes.
   in_vocab_path = os.path.join(data_dir, "vocab%d.input" % in_vocabulary_size)
   out_vocab_path = os.path.join(data_dir, "vocab%d.output" % out_vocabulary_size)
-  create_vocabulary(in_vocab_path, train_path + ".input", in_vocabulary_size)
-  create_vocabulary(out_vocab_path, train_path + ".output", out_vocabulary_size)
+  create_vocabulary(in_vocab_path, train_path + ".input", in_vocabulary_size, normalize_digits=False)
+  create_vocabulary(out_vocab_path, train_path + ".output", out_vocabulary_size, normalize_digits=False)
 
   # Create token ids for the training data.
   in_train_ids_path = train_path + (".ids%d.input" % in_vocabulary_size)
   out_train_ids_path = train_path + (".ids%d.output" % out_vocabulary_size)
-  data_to_token_ids(train_path + ".input", in_train_ids_path, in_vocab_path)
-  data_to_token_ids(train_path + ".output", out_train_ids_path, out_vocab_path)
+  data_to_token_ids(train_path + ".input", in_train_ids_path, in_vocab_path, normalize_digits=False)
+  data_to_token_ids(train_path + ".output", out_train_ids_path, out_vocab_path, normalize_digits=False)
 
   # Create token ids for the development data.
   in_dev_ids_path = dev_path + (".ids%d.input" % in_vocabulary_size)
   out_dev_ids_path = dev_path + (".ids%d.output" % out_vocabulary_size)
-  data_to_token_ids(dev_path + ".input", in_dev_ids_path, in_vocab_path)
-  data_to_token_ids(dev_path + ".output", out_dev_ids_path, out_vocab_path)
+  data_to_token_ids(dev_path + ".input", in_dev_ids_path, in_vocab_path, normalize_digits=False)
+  data_to_token_ids(dev_path + ".output", out_dev_ids_path, out_vocab_path, normalize_digits=False)
 
   return (in_train_ids_path, out_train_ids_path,
           in_dev_ids_path, out_dev_ids_path,
