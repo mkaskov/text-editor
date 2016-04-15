@@ -47,10 +47,10 @@ def basic_tokenizer(sentence):
 def basic_tokenizer_2(sentence):
   """простой токенизер с несколько изменной схемой нарезания слов. Так же как и простой токенизер превращает предложение в список токенов."""
   sentence = sentence.decode('utf-8')
-  # Снять комментарий, если нужно привести текст к нижнему регистру
-  # sentence = sentence.lower()
+  # sentence = sentence.lower() # привести текст к нижнему регистру
   words = []
-  words = re.findall(ur"[a-zA-Zа-яА-Я()\-]*[^\s^0-9\.,:]|[0-9]|[.,:]", sentence)
+  #words = re.findall(ur"[a-zA-Zа-яА-Я()\-]*[^\s^0-9\.,:]|[0-9]|[.,:]", sentence) # прим в версии v5
+  words = re.findall(ur"[а-яА-Я][\/][м]*[0-9]{1}|[м]*[0-9]{1}|[a-zA-Zа-яА-Я\-\/\*]*[^\s0-9\.,:;()\"\'<>%«»±…]|[0-9()\'\"<>%,:;±«»^…]|\.{3}|\.{1}", sentence) # прим в версии v6
   return [w.encode('utf-8') for w in words if w]  
 
 

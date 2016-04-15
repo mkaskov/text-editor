@@ -47,7 +47,7 @@ tf.app.flags.DEFINE_float("max_gradient_norm", 5.0,
                           "Clip gradients to this norm.")
 tf.app.flags.DEFINE_integer("batch_size", 64,
                             "Batch size to use during training.")
-tf.app.flags.DEFINE_integer("size", 1024, "Size of each model layer.")
+tf.app.flags.DEFINE_integer("size", 512, "Size of each model layer.")
 tf.app.flags.DEFINE_integer("num_layers", 3, "Number of layers in the model.")
 tf.app.flags.DEFINE_integer("in_vocab_size", 40000, "INPUT vocabulary size.")
 tf.app.flags.DEFINE_integer("out_vocab_size", 40000, "OUTPUT vocabulary size.")
@@ -65,7 +65,7 @@ FLAGS = tf.app.flags.FLAGS
 # We use a number of buckets and pad to the closest one for efficiency.
 # See seq2seq_model.Seq2SeqModel for details of how they work.
 # _buckets = [(5, 10), (10, 15), (20, 25), (40, 50),(50, 60),(60,70),(70,80),(80,90),(90,100)] # Это зачем?
-_buckets = [(5, 10), (10, 15), (30, 35), (50, 60)]
+_buckets = [(5, 10), (10, 15), (30, 35), (50, 60), (90, 100)]
 
 
 # Load vocabularies.
@@ -126,8 +126,6 @@ def decode_sentense():
   return jsonify(answer=web_decode(content['query']))  
   
 def web_decode(sentence):
-  # with tf.Session() as sess: //// метод try catch, здесь не используется,так как необходимы глобальные переменные на приложение
-    
   sentence = sentence.encode('utf8') #сначала надо перекодировать в utf-8 приходящий запрос, потому что словарь записан в этом формате
   token_ids = data_utils.sentence_to_token_ids(sentence, in_vocab, normalize_digits=False) # Get token-ids for the input sentence.
   #для справки выводим токены введёного текста
@@ -162,9 +160,8 @@ def onstart():
   global sess
   sess = tf.Session()
   global model
-  # with tf.Session() as sess: //// метод try catch, здесь не используется,так как необходимы глобальные переменные на приложение
 
-  # Create model and load parameters.
+  # Создаем модель и загружаем параметры
   print("Load model")
   model = create_model(sess, True)
   model.batch_size = 1  # We decode one sentence at a time.
@@ -172,4 +169,4 @@ def onstart():
 
 if __name__ == "__main__":
   onstart()
-  app.run(host='0.0.0.0', port=5001, debug=True, use_reloader=False,threaded=True)
+  app.run(host='0.0.0.0', port=5001, debug=True, use_reloader=False, threaded=True)

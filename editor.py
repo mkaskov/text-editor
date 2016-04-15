@@ -42,7 +42,7 @@ tf.app.flags.DEFINE_float("max_gradient_norm", 5.0,
                           "Clip gradients to this norm.")
 tf.app.flags.DEFINE_integer("batch_size", 64,
                             "Batch size to use during training.")
-tf.app.flags.DEFINE_integer("size", 1024, "Size of each model layer.")
+tf.app.flags.DEFINE_integer("size", 512, "Size of each model layer.")
 tf.app.flags.DEFINE_integer("num_layers", 3, "Number of layers in the model.")
 tf.app.flags.DEFINE_integer("in_vocab_size", 40000, "INPUT vocabulary size.")
 tf.app.flags.DEFINE_integer("out_vocab_size", 40000, "OUTPUT vocabulary size.")
@@ -61,8 +61,8 @@ FLAGS = tf.app.flags.FLAGS
 
 # We use a number of buckets and pad to the closest one for efficiency.
 # See seq2seq_model.Seq2SeqModel for details of how they work.
-# _buckets = [(5, 10), (10, 15), (20, 25), (40, 50)]
-_buckets = [(5, 10), (10, 15), (30, 35), (50, 60)]
+# _buckets = [(5, 10), (10, 15), (20, 25), (40, 50)] # стандартные
+_buckets = [(5, 10), (10, 15), (30, 35), (50, 60)] # чуть удлиненные (применялись в v5 и v6)
 
 
 def read_data(source_path, target_path, max_size=None):
