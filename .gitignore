@@ -191,4 +191,5 @@ $RECYCLE.BIN/
 
 tmp/
 
+*.pyc
 seq2seq_model.pyc
