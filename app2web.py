@@ -19,17 +19,9 @@ from __future__ import division
 from __future__ import print_function
 
 from flask import Flask
-from flask import render_template
 from flask import request, jsonify
 
-import urllib
-
-import math
 import os
-import random
-import sys
-import time
-import re
 
 import numpy as np
 from six.moves import xrange  # pylint: disable=redefined-builtin
@@ -37,7 +29,7 @@ import tensorflow as tf
 
 import data_utils
 import seq2seq_model
-import util.documentUtil as docUtil
+import util.textUtil as textUtil
 from cStringIO import StringIO
 
 # Obtain the flask app object
@@ -95,15 +87,11 @@ def create_model(session, forward_only):
       print("Error! No model to load!")
   return model
 
-@app.route('/')
-def index():
-    return render_template("index.html")   
-          
 @app.route('/decode_sentense', methods=['POST'])  # метод через json, принимает запросы в виде строки от клиента
 def decode_sentense():
 
   query = request.json['query']
-  sentences = docUtil.splitter_with_prepare(query)
+  sentences = textUtil.sent_splitter(query)
   answer = batch_recognition(sentences)
 
   return jsonify(answer=answer)
@@ -113,12 +101,13 @@ def batch_recognition(sentences):
     answer.truncate(0)
     for s in sentences:
         [answer.write('\n') if '[newline]' in s else answer.write('')]
-        s = docUtil.text_ttp_special_decode(s)
+        s = textUtil.prepare_decode(s)
         answer.write(recognition(s))
     return answer.getvalue().strip()
 
 def recognition(sentence):
   token_ids = data_utils.sentence_to_token_ids(sentence, in_vocab, normalize_digits=False) # Get token-ids for the input sentence.
+
   #для справки выводим токены введёного текста
   print("Input sentence:")
   print(sentence)
@@ -161,9 +150,7 @@ def onstart():
   print("Load model")
   model = create_model(sess, True)
   model.batch_size = 1  # We decode one sentence at a time.
-    
 
 if __name__ == "__main__":
   onstart()
-  # app.run(host='0.0.0.0', port=5001, debug=True, use_reloader=False, threaded=True)
   app.run(host='0.0.0.0', port=5002, debug=True, use_reloader=False, threaded=True) #новый порт, чтобы обращаться к нему из веб-приложения, запущенного на JAVA
