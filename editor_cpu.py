@@ -28,11 +28,10 @@ import sys
 import time
 
 import numpy as np
-from six.moves import xrange  # pylint: disable=redefined-builtin
 import tensorflow as tf
+from six.moves import xrange  # pylint: disable=redefined-builtin
 
-import data_utils
-import seq2seq_model
+from nnet import data_utils, seq2seq_model
 
 # by default as translate model
 tf.app.flags.DEFINE_float("learning_rate", 0.5, "Learning rate.")

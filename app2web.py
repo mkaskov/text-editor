@@ -18,19 +18,17 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from flask import Flask
-from flask import request, jsonify
-
 import os
+from cStringIO import StringIO
 
 import numpy as np
-from six.moves import xrange  # pylint: disable=redefined-builtin
 import tensorflow as tf
+from flask import Flask
+from flask import request, jsonify
+from six.moves import xrange  # pylint: disable=redefined-builtin
 
-import data_utils
-import seq2seq_model
-import util.textUtil as textUtil
-from cStringIO import StringIO
+from nnet import data_utils, seq2seq_model
+from util import textUtil
 
 # Obtain the flask app object
 app = Flask(__name__)
@@ -100,9 +98,10 @@ def batch_recognition(sentences):
     answer = StringIO()
     answer.truncate(0)
     for s in sentences:
-        [answer.write('\n') if '[newline]' in s else answer.write('')]
+        if '[newline]' in s: answer.write('\n')
         s = textUtil.prepare_decode(s)
-        answer.write(recognition(s))
+        answer.write(recognition(s).strip())
+        answer.write(' ')
     return answer.getvalue().strip()
 
 def recognition(sentence):
@@ -129,11 +128,11 @@ def recognition(sentence):
       outputs = outputs[:outputs.index(data_utils.EOS_ID)]
   
   # Print out OUTPUT sentence corresponding to outputs.
-  retValue = (" ".join([rev_out_vocab[output] for output in outputs])).decode("utf-8")
+  retValue = textUtil.buildRetValue(outputs,rev_out_vocab)
   print("Output sentence:")
   print(retValue)
   
-  return retValue.encode('utf8')
+  return retValue
 
 def onstart():
   #Создаем глобальные переменные (сессия тенсорфлоу и обрабатывающая модель)
