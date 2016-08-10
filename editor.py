@@ -65,6 +65,7 @@ FLAGS = tf.app.flags.FLAGS
 _buckets = [(5, 10), (10, 15), (30, 35), (50, 60)] # чуть удлиненные (применялись в v5 и v6)
 
 
+
 def read_data(source_path, target_path, max_size=None):
   """Read data from source and target files and put into buckets.
 
@@ -105,7 +106,6 @@ def read_data(source_path, target_path, max_size=None):
 
 def create_model(session, forward_only):
   """Create model and initialize or load parameters in session."""
-  # with tf.device('/cpu:0'):
   model = seq2seq_model.Seq2SeqModel(
       FLAGS.in_vocab_size, FLAGS.out_vocab_size, _buckets,
       FLAGS.size, FLAGS.num_layers, FLAGS.max_gradient_norm, FLAGS.batch_size,

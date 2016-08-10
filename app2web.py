@@ -6,7 +6,7 @@
 It start public server on port 5001
 
 Директория с данными --data_dir 
-директория с результатами обучения --train_dir.
+Директория с обученной моделью --train_dir.
 
 See the following papers for more information on neural translation models.
  * http://arxiv.org/abs/1409.3215
@@ -22,6 +22,8 @@ from flask import Flask
 from flask import render_template
 from flask import request, jsonify
 
+import urllib
+
 import math
 import os
 import random
@@ -35,6 +37,8 @@ import tensorflow as tf
 
 import data_utils
 import seq2seq_model
+import util.documentUtil as docUtil
+from cStringIO import StringIO
 
 # Obtain the flask app object
 app = Flask(__name__)
@@ -95,38 +99,25 @@ def create_model(session, forward_only):
 def index():
     return render_template("index.html")   
           
-@app.route('/decode', methods=['POST'])  # метод через json, принимает запросы в виде массива от клиента  
-def decode():
-  content = request.json
-  retValue =[]
-  
-   # Подготовка абзаца текста к распознованию, разбиваем на предложения 
- # tempSentArray = []
- # tempSentArray = re.split('\. ', elem['col3']) # необходимо будет переделать паттерн для определения предложений, от этого зависит качество распознаваемого предложения
- # tempNewSentense = ""
- 
- # Прогон разбитого предложения через декодер
- # for sentElem in tempSentArray:
-  # if len(sentElem.strip())>0:
-   # tempNewSentense += web_decode(sentElem) 
-  
-  
-  for elem in content: 
-   tempSentArray = [] 
-   for inputElem in elem['data']:
-    tempSentArray.append(web_decode(inputElem['input']))
-   tempElem = {"out":tempSentArray}
-   retValue.append(tempElem)
-  
-  return jsonify(answer=retValue)
-
-@app.route('/decode_sentense', methods=['POST'])  # метод через json, принимает запросы в виде строки от клиента  
+@app.route('/decode_sentense', methods=['POST'])  # метод через json, принимает запросы в виде строки от клиента
 def decode_sentense():
-  content = request.json
-  return jsonify(answer=web_decode(content['query']))  
-  
-def web_decode(sentence):
-  sentence = sentence.encode('utf8') #сначала надо перекодировать в utf-8 приходящий запрос, потому что словарь записан в этом формате
+
+  query = request.json['query']
+  sentences = docUtil.splitter_with_prepare(query)
+  answer = batch_recognition(sentences)
+
+  return jsonify(answer=answer)
+
+def batch_recognition(sentences):
+    answer = StringIO()
+    answer.truncate(0)
+    for s in sentences:
+        [answer.write('\n') if '[newline]' in s else answer.write('')]
+        s = docUtil.text_ttp_special_decode(s)
+        answer.write(recognition(s))
+    return answer.getvalue().strip()
+
+def recognition(sentence):
   token_ids = data_utils.sentence_to_token_ids(sentence, in_vocab, normalize_digits=False) # Get token-ids for the input sentence.
   #для справки выводим токены введёного текста
   print("Input sentence:")
@@ -134,8 +125,8 @@ def web_decode(sentence):
   print(token_ids)
   
   # Which bucket does it belong to?
-  bucket_id = min([b for b in xrange(len(_buckets))
-                     if _buckets[b][0] > len(token_ids)])
+  detect_bucket_array = [b for b in xrange(len(_buckets)) if _buckets[b][0] > len(token_ids)]
+  bucket_id = min(detect_bucket_array) if len(detect_bucket_array)>0 else len(_buckets)-1
   # Get a 1-element batch to feed the sentence to the model.
   encoder_inputs, decoder_inputs, target_weights = model.get_batch(
         {bucket_id: [(token_ids, [])]}, bucket_id)
@@ -153,12 +144,17 @@ def web_decode(sentence):
   print("Output sentence:")
   print(retValue)
   
-  return retValue # будем например возвращать декодированную фразу в виде строки
+  return retValue.encode('utf8')
 
 def onstart():
   #Создаем глобальные переменные (сессия тенсорфлоу и обрабатывающая модель)
   global sess
-  sess = tf.Session()
+  
+  # Выделение видеопамяти на процесс 20%
+  gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.20)
+  sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
+  #sess = tf.Session()
+  
   global model
 
   # Создаем модель и загружаем параметры
@@ -169,4 +165,5 @@ def onstart():
 
 if __name__ == "__main__":
   onstart()
-  app.run(host='0.0.0.0', port=5001, debug=True, use_reloader=False, threaded=True)
+  # app.run(host='0.0.0.0', port=5001, debug=True, use_reloader=False, threaded=True)
+  app.run(host='0.0.0.0', port=5002, debug=True, use_reloader=False, threaded=True) #новый порт, чтобы обращаться к нему из веб-приложения, запущенного на JAVA

@@ -9,4 +9,4 @@ export TF_MIN_GPU_MULTIPROCESSOR_COUNT=5
 
 #python /home/user/Documents/editor/app2web.py --data_dir /home/user/Documents/editor/text_editor_v7/ --train_dir /home/user/Documents/editor/text_editor_v7/checkpoints/ --size=512
 
-python /home/user/Documents/editor/app2web.py --data_dir /home/user/Documents/editor/text_editor_v8/ --train_dir /home/user/Documents/editor/text_editor_v8/checkpoints/ --size=512
+python /home/user/Documents/editor/app2web5003.py --data_dir /home/user/Documents/editor/text_editor_v8/ --train_dir /home/user/Documents/editor/text_editor_v8/checkpoints/ --size=512

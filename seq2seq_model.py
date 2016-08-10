@@ -1,4 +1,18 @@
-# by Max8mk
+# Copyright 2015 The TensorFlow Authors. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+
 """Sequence-to-sequence model with an attention mechanism."""
 
 from __future__ import absolute_import
@@ -11,8 +25,7 @@ import numpy as np
 from six.moves import xrange  # pylint: disable=redefined-builtin
 import tensorflow as tf
 
-#from tensorflow.models.rnn.translate import data_utils
-import data_utils
+from tensorflow.models.rnn.translate import data_utils
 
 
 class Seq2SeqModel(object):
@@ -70,17 +83,15 @@ class Seq2SeqModel(object):
     softmax_loss_function = None
     # Sampled softmax only makes sense if we sample less than vocabulary size.
     if num_samples > 0 and num_samples < self.target_vocab_size:
-      with tf.device("/cpu:0"):
-        w = tf.get_variable("proj_w", [size, self.target_vocab_size])
-        w_t = tf.transpose(w)
-        b = tf.get_variable("proj_b", [self.target_vocab_size])
+      w = tf.get_variable("proj_w", [size, self.target_vocab_size])
+      w_t = tf.transpose(w)
+      b = tf.get_variable("proj_b", [self.target_vocab_size])
       output_projection = (w, b)
 
       def sampled_loss(inputs, labels):
-        with tf.device("/cpu:0"):
-          labels = tf.reshape(labels, [-1, 1])
-          return tf.nn.sampled_softmax_loss(w_t, b, inputs, labels, num_samples,
-                                            self.target_vocab_size)
+        labels = tf.reshape(labels, [-1, 1])
+        return tf.nn.sampled_softmax_loss(w_t, b, inputs, labels, num_samples,
+                self.target_vocab_size)
       softmax_loss_function = sampled_loss
 
     # Create the internal multi-layer cell for our RNN.
@@ -94,8 +105,11 @@ class Seq2SeqModel(object):
     # The seq2seq function: we use embedding for the input and attention.
     def seq2seq_f(encoder_inputs, decoder_inputs, do_decode):
       return tf.nn.seq2seq.embedding_attention_seq2seq(
-          encoder_inputs, decoder_inputs, cell, source_vocab_size,
-          target_vocab_size, output_projection=output_projection,
+          encoder_inputs, decoder_inputs, cell,
+          num_encoder_symbols=source_vocab_size,
+          num_decoder_symbols=target_vocab_size,
+          embedding_size=size,
+          output_projection=output_projection,
           feed_previous=do_decode)
 
     # Feeds for inputs.
