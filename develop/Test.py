@@ -25,7 +25,7 @@ print ('          Hello        '.strip() )
 
 print (('аываы'.strip().capitalize()))
 
-zzz = 'аываы'.decode('utf-8').capitalize()
+zzz = 'аываы FSDF'.decode('utf-8').capitalize()
 
 print (zzz)
 

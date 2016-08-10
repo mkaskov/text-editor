@@ -38,11 +38,13 @@ def printArr(array):
 def buildRetValue(outputs,vocab):
     retValue = StringIO()
     retValue.truncate(0)
-    for idx,val in enumerate(outputs): retValue.write(getConvertedWord(idx,outputs,vocab))
+    for id,val in enumerate(outputs): retValue.write(getConvertedWord(id,outputs,vocab))
     return retValue.getvalue()
 
 def getConvertedWord(id,outputs,vocab):
     word = vocab[outputs[id]]
+    if id==0: word = word.decode('utf8').capitalize().encode('utf8')
+
     state = getWordState(id,outputs,vocab,word)
     if id + 1 < len(outputs): nextWord = vocab[outputs[id + 1]]
 
