@@ -110,9 +110,8 @@ def recognition(sentence):
   token_ids = data_utils.sentence_to_token_ids(sentence, in_vocab, normalize_digits=False) # Get token-ids for the input sentence.
 
   #для справки выводим токены введёного текста
-  print("Input sentence:")
-  print(sentence)
-  print(token_ids)
+  print("Input sentence: ",sentence)
+  print('Tokens: ',token_ids)
   
   # Which bucket does it belong to?
   detect_bucket_array = [b for b in xrange(len(_buckets)) if _buckets[b][0] > len(token_ids)]
@@ -131,9 +130,8 @@ def recognition(sentence):
   
   # Print out OUTPUT sentence corresponding to outputs.
   retValue = textUtil.buildRetValue(outputs,rev_out_vocab)
-  print("Output sentence:")
-  print(retValue)
-  
+  print("Output sentence: ",retValue)
+
   return retValue
 
 def onstart():

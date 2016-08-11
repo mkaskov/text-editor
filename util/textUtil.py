@@ -11,8 +11,8 @@ import re
 from .switch import switch
 from cStringIO import StringIO
 
-afterSpace = ['.', ',',':']
-beforSpace = ['°']
+afterSpace = ['.', ',',':',')','%']
+beforSpace = ['°','(']
 emptyStr = ['. ','','[newline]']
 
 def sent_splitter(source):
@@ -49,15 +49,19 @@ def getConvertedWord(id,outputs,vocab):
     for case in switch(state):
         if case('digit'): return word
         if case('beforeSpace'): return ' ' + word
-        if case('afterSpace','hasBeforeSpace'): return word + ' '
+        if case('afterSpace'): return word + ' '
         if case('afterSpaceHasNext'):
+            if ')'==word and nextWord.isdigit(): return word + ' '
             if id != 0 and not vocab[outputs[id-1]].isdigit() and nextWord.isdigit(): return word + ' '
             if nextWord.isdigit() or '.' == nextWord: return word
             else: return word + ' '
         if case('hasNextWord'):
-            if nextWord.isdigit(): return ' ' + word + ' '
+            if nextWord.isdigit() or '%'==nextWord: return ' ' + word + ' '
             if nextWord in afterSpace: return ' ' + word
             else: return ' ' + word + ' '
+        if case('hasBeforeSpace'):
+            if id + 1 < len(outputs) and nextWord in afterSpace: return word
+            else: return word + ' '
         if case(): return ' ' + word + ' '
 
 def getWordState(id,outputs,vocab,word):
