@@ -100,7 +100,9 @@ def batch_recognition(sentences):
     for s in sentences:
         if '[newline]' in s: answer.write('\n')
         s = textUtil.prepare_decode(s)
-        answer.write(recognition(s).strip())
+        s = recognition(s)
+        s = textUtil.removeSpaces(s)
+        answer.write(s)
         answer.write(' ')
     return answer.getvalue().strip()
 

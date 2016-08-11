@@ -33,3 +33,18 @@ print (zzz)
 # slugify = Slugify(translate=None,capitalize=True, separator=' ')
 
 # print (slugify(' ываываыв'))  # 'any-text')
+
+s = "sdfs sdfsd     sdfsfd"
+s = re.sub("[\s]+", " ", s).strip()
+
+print (s)
+
+s = " Габаритные размеры :   110 х 140 х 35 мм.".decode('utf-8')
+s = re.sub("[\s\xA0]+", " ", s).strip()
+# s = re.sub("[\s]+", " ", s).strip()
+
+print (s)
+#
+# s = " Габаритные размеры :   110 х 140 х 35 мм."
+# s = re.sub('[\s]+','', s.rstrip())
+# print (s)

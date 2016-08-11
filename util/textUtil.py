@@ -11,7 +11,7 @@ import re
 from .switch import switch
 from cStringIO import StringIO
 
-afterSpace = ['.', ',']
+afterSpace = ['.', ',',':']
 beforSpace = ['°']
 emptyStr = ['. ','','[newline]']
 
@@ -23,17 +23,15 @@ def sent_splitter(source):
   sentences.extend(re.split(SPLIT, source))
   return [s for s in sentences if s not in emptyStr]
 
-def prepare_encode(text):
-    return text.replace('\n','\n[newline]').replace('...','[threedot]').replace('. ', '[dot]. ')
+def prepare_encode(t): return t.replace('\n', '\n[newline]').replace('...', '[threedot]').replace('. ', '[dot]. ')
 
-def prepare_decode(text):
-    return text.replace('[newline]', '').replace('[threedot]','...').replace('[dot]', '. ')
+def prepare_decode(t): return t.replace('[newline]', '').replace('[threedot]', '...').replace('[dot]', '. ')
 
-def decode_from_java(source):
-  return urllib.unquote(source.encode('utf8'))
+def decode_from_java(s): return urllib.unquote(s.encode('utf8'))
 
-def printArr(array):
-    [print(e) for e in array]
+def printArr(ar): [print(e) for e in ar]
+
+def removeSpaces(t): return re.sub("[\s\xA0]+", " ", t.decode('utf-8')).encode('utf-8').strip()
 
 def buildRetValue(outputs,vocab):
     retValue = StringIO()
