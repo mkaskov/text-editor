@@ -53,6 +53,8 @@ tf.app.flags.DEFINE_integer("steps_per_checkpoint", 200,
                             "How many training steps to do per checkpoint.")
 tf.app.flags.DEFINE_boolean("web_decode", True,
                             "Set to True for interactive decoding into web.")
+tf.app.flags.DEFINE_integer("port", 5002,
+                            "default port.")
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -152,4 +154,4 @@ def onstart():
 
 if __name__ == "__main__":
   onstart()
-  app.run(host='0.0.0.0', port=5002, debug=True, use_reloader=False, threaded=True) #новый порт, чтобы обращаться к нему из веб-приложения, запущенного на JAVA
+  app.run(host='0.0.0.0', port=FLAGS.port, debug=True, use_reloader=False, threaded=True) #новый порт, чтобы обращаться к нему из веб-приложения, запущенного на JAVA

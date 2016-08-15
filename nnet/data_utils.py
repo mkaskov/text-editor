@@ -31,9 +31,9 @@ EOS_ID = 2
 UNK_ID = 3
 
 # Регулярные выражения, используемые для создания токенов (tokenize).
-# _WORD_SPLIT = re.compile("([.,!?\"':;)(])") # base
 _WORD_SPLIT = re.compile("([,.][ ]+|[!?\"':;)(])") # v2 (not tested)
-_DIGIT_RE = re.compile(r"\d") 
+_DIGIT_RE = re.compile(r"\d")
+_TTP_WORD_SPLIT = re.compile(ur"[а-яА-Я][\/][м]*[0-9]{1}|[м]*[0-9]{1}|[a-zA-Zа-яА-Я\-\/\*]*[^\s0-9\.!?,:;()\"\'<>%«»±…]|[0-9()!?\'\"<>%,:;±«»^…]|\.{3}|\.{1}")
 
 
 def basic_tokenizer(sentence):
@@ -44,13 +44,12 @@ def basic_tokenizer(sentence):
   return [w for w in words if w]
 
 
-def basic_tokenizer_2(sentence):
+def tokenizer_tpp(sentence):
   """простой токенизер с несколько изменной схемой нарезания слов. Так же как и простой токенизер превращает предложение в список токенов."""
   sentence = sentence.decode('utf-8')
   # sentence = sentence.lower() # привести текст к нижнему регистру
   words = []
-  #words = re.findall(ur"[a-zA-Zа-яА-Я()\-]*[^\s^0-9\.,:]|[0-9]|[.,:]", sentence) # прим в версии v5
-  words = re.findall(ur"[а-яА-Я][\/][м]*[0-9]{1}|[м]*[0-9]{1}|[a-zA-Zа-яА-Я\-\/\*]*[^\s0-9\.,:;()\"\'<>%«»±…]|[0-9()\'\"<>%,:;±«»^…]|\.{3}|\.{1}", sentence) # прим в версии v6
+  words = re.findall(_TTP_WORD_SPLIT, sentence)
   return [w.encode('utf-8') for w in words if w]  
 
 
@@ -69,7 +68,7 @@ def create_vocabulary(vocabulary_path, data_path, max_vocabulary_size,
     data_path: data file that will be used to create vocabulary.
     max_vocabulary_size: limit on the size of the created vocabulary.
     tokenizer: a function to use to tokenize each data sentence;
-      if None, basic_tokenizer_2 will be used.
+      if None, tokenizer_tpp will be used.
     normalize_digits: Boolean; если true, то все цифры заменяются на нуль.
   """
   if not gfile.Exists(vocabulary_path):
@@ -81,7 +80,7 @@ def create_vocabulary(vocabulary_path, data_path, max_vocabulary_size,
         counter += 1
         if counter % 100000 == 0:
           print("  processing line %d" % counter)
-        tokens = tokenizer(line) if tokenizer else basic_tokenizer_2(line)
+        tokens = tokenizer(line) if tokenizer else tokenizer_tpp(line)
         for w in tokens:
           word = re.sub(_DIGIT_RE, "0", w) if normalize_digits else w
           if word in vocab:
@@ -139,7 +138,7 @@ def sentence_to_token_ids(sentence, vocabulary,
     sentence: a string, the sentence to convert to token-ids.
     vocabulary: a dictionary mapping tokens to integers.
     tokenizer: a function to use to tokenize each sentence;
-      if None, basic_tokenizer_2 will be used.
+      if None, tokenizer_tpp will be used.
 	normalize_digits: Boolean; если true, то все цифры заменяются на нуль.
 
   Returns:
@@ -148,7 +147,7 @@ def sentence_to_token_ids(sentence, vocabulary,
   if tokenizer:
     words = basic_tokenizer(sentence)
   else:
-    words = basic_tokenizer_2(sentence)
+    words = tokenizer_tpp(sentence)
     # for elem in words:
       # print (elem)
   if not normalize_digits:
@@ -170,7 +169,7 @@ def data_to_token_ids(data_path, target_path, vocabulary_path,
     target_path: path where the file with token-ids will be created.
     vocabulary_path: path to the vocabulary file.
     tokenizer: a function to use to tokenize each sentence;
-      if None, basic_tokenizer_2 will be used.
+      if None, tokenizer_tpp will be used.
     normalize_digits: Boolean; если true, то все цифры заменяются на нуль.
   """
   if not gfile.Exists(target_path):

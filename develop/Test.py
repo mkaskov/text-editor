@@ -5,6 +5,7 @@ from __future__ import division
 from __future__ import print_function
 import re
 import string
+import sys
 
 from slugify import Slugify, UniqueSlugify, slugify, slugify_unicode
 from slugify import slugify_url, slugify_filename
@@ -48,3 +49,9 @@ print (s)
 # s = " Габаритные размеры :   110 х 140 х 35 мм."
 # s = re.sub('[\s]+','', s.rstrip())
 # print (s)
+
+
+
+print ('Number of arguments:', len(sys.argv), 'arguments.')
+print ('Argument List:', str(sys.argv))
+
