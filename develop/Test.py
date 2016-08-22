@@ -55,3 +55,7 @@ print (s)
 print ('Number of arguments:', len(sys.argv), 'arguments.')
 print ('Argument List:', str(sys.argv))
 
+s = "[li]поперечных >81 (8,1) до 133 (13,3)"
+s = s[4:]
+
+print (s)

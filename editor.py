@@ -35,7 +35,7 @@ from nnet import data_utils, seq2seq_model
 
 # by default as translate model
 tf.app.flags.DEFINE_float("learning_rate", 0.5, "Learning rate.")
-tf.app.flags.DEFINE_float("learning_rate_decay_factor", 0.99,
+tf.app.flags.DEFINE_float("learning_rate_decay_factor", 0.9,
                           "Learning rate decays by this much.")
 tf.app.flags.DEFINE_float("max_gradient_norm", 5.0,
                           "Clip gradients to this norm.")
@@ -61,7 +61,7 @@ FLAGS = tf.app.flags.FLAGS
 # We use a number of buckets and pad to the closest one for efficiency.
 # See seq2seq_model.Seq2SeqModel for details of how they work.
 # _buckets = [(5, 10), (10, 15), (20, 25), (40, 50)] # стандартные
-_buckets = [(5, 10), (10, 15), (30, 35), (50, 60)] # чуть удлиненные (применялись в v5 и v6)
+_buckets = [(5, 10), (10, 15), (30, 35), (50, 60), (90, 100)]
 
 
 

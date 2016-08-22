@@ -144,6 +144,7 @@ def sentence_to_token_ids(sentence, vocabulary,
   Returns:
     a list of integers, the token-ids for the sentence.
   """
+  # если мы передали какую то свою функцию
   if tokenizer:
     words = basic_tokenizer(sentence)
   else:

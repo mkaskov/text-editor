@@ -102,10 +102,16 @@ def batch_recognition(sentences):
     for s in sentences:
         if '[newline]' in s: answer.write('\n')
         s = textUtil.prepare_decode(s)
-        s = recognition(s)
-        s = textUtil.removeSpaces(s)
-        answer.write(s)
-        answer.write(' ')
+        if '[OL]' in s or '[UL]' in s:
+            answer.write(s)
+        else:
+            if '[LI]' in s:
+                answer.write('[LI]')
+                s = s[4:]
+            s = recognition(s)
+            s = textUtil.removeSpaces(s)
+            answer.write(s)
+            answer.write(' ')
     return answer.getvalue().strip()
 
 def recognition(sentence):
