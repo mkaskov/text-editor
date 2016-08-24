@@ -28,7 +28,7 @@ from flask import request, jsonify
 from six.moves import xrange  # pylint: disable=redefined-builtin
 
 from nnet import data_utils, seq2seq_model
-from util import textUtil
+from util import textUtil, ttpSettings
 
 # Obtain the flask app object
 app = Flask(__name__)
@@ -60,8 +60,7 @@ FLAGS = tf.app.flags.FLAGS
 
 # We use a number of buckets and pad to the closest one for efficiency.
 # See seq2seq_model.Seq2SeqModel for details of how they work.
-# _buckets = [(5, 10), (10, 15), (20, 25), (40, 50),(50, 60),(60,70),(70,80),(80,90),(90,100)] # Это зачем?
-_buckets = [(5, 10), (10, 15), (30, 35), (50, 60), (90, 100)]
+_buckets = ttpSettings.buckets
 
 
 # Load vocabularies.
