@@ -29,6 +29,7 @@ from six.moves import xrange  # pylint: disable=redefined-builtin
 
 from nnet import data_utils, seq2seq_model
 from util import textUtil, ttpSettings
+import core
 
 # Obtain the flask app object
 app = Flask(__name__)
@@ -58,33 +59,7 @@ tf.app.flags.DEFINE_integer("port", 5002,
 
 FLAGS = tf.app.flags.FLAGS
 
-# We use a number of buckets and pad to the closest one for efficiency.
-# See seq2seq_model.Seq2SeqModel for details of how they work.
-_buckets = ttpSettings.buckets
-
-
-# Load vocabularies.
-in_vocab_path = os.path.join(FLAGS.data_dir, "vocab%d.input" % FLAGS.in_vocab_size)
-out_vocab_path = os.path.join(FLAGS.data_dir, "vocab%d.output" % FLAGS.out_vocab_size)
-in_vocab, _ = data_utils.initialize_vocabulary(in_vocab_path)
-_, rev_out_vocab = data_utils.initialize_vocabulary(out_vocab_path)
-
-
-def create_model(session, forward_only):
-  """Initialize model or load parameters in session."""
-  # with tf.device('/cpu:0'):
-  model = seq2seq_model.Seq2SeqModel(
-      FLAGS.in_vocab_size, FLAGS.out_vocab_size, _buckets,
-      FLAGS.size, FLAGS.num_layers, FLAGS.max_gradient_norm, FLAGS.batch_size,
-      FLAGS.learning_rate, FLAGS.learning_rate_decay_factor,
-      forward_only=forward_only)
-  ckpt = tf.train.get_checkpoint_state(FLAGS.train_dir)
-  if ckpt and tf.gfile.Exists(ckpt.model_checkpoint_path):
-    print("Reading model parameters from %s" % ckpt.model_checkpoint_path)
-    model.saver.restore(session, ckpt.model_checkpoint_path)
-  else:
-      print("Error! No model to load!")
-  return model
+global core
 
 @app.route('/decode_sentense', methods=['POST'])  # метод через json, принимает запросы в виде строки от клиента
 def decode_sentense():
@@ -101,62 +76,21 @@ def batch_recognition(sentences):
     for s in sentences:
         if '[newline]' in s: answer.write('\n')
         s = textUtil.prepare_decode(s)
-        if '[OL]' in s or '[UL]' in s:
-            answer.write(s)
+        if '[OL]' in s or '[UL]' in s: answer.write(s)
         else:
-            if '[LI]' in s:
-                answer.write('[LI]')
-                s = s[4:]
-            s = recognition(s)
+            if '[LI]' in s: answer.write('[LI]'); s = s[4:]
+            print ("------------------------------- Start recogintion -----------------------------------------")
+            outputs, rev_out_vocab =  core.recognition(s)
+            orig_val = (" ".join([rev_out_vocab[output] for output in outputs])).decode("utf-8")
+            print("Output sentence: ", orig_val)
+            s = textUtil.buildRetValue(outputs, rev_out_vocab)
             s = textUtil.removeSpaces(s)
+            print("Final sentence: ", s)
             answer.write(s)
             answer.write(' ')
     return answer.getvalue().strip()
 
-def recognition(sentence):
-  token_ids = data_utils.sentence_to_token_ids(sentence, in_vocab, normalize_digits=False) # Get token-ids for the input sentence.
-
-  #для справки выводим токены введёного текста
-  print("Input sentence: ",sentence)
-  print('Tokens: ',token_ids)
-  
-  # Which bucket does it belong to?
-  detect_bucket_array = [b for b in xrange(len(_buckets)) if _buckets[b][0] > len(token_ids)]
-  bucket_id = min(detect_bucket_array) if len(detect_bucket_array)>0 else len(_buckets)-1
-  # Get a 1-element batch to feed the sentence to the model.
-  encoder_inputs, decoder_inputs, target_weights = model.get_batch(
-        {bucket_id: [(token_ids, [])]}, bucket_id)
-  # Get output logits for the sentence.
-  _, _, output_logits = model.step(sess, encoder_inputs, decoder_inputs,
-                                     target_weights, bucket_id, True)
-  # This is a greedy decoder - outputs are just argmaxes of output_logits.
-  outputs = [int(np.argmax(logit, axis=1)) for logit in output_logits]
-  # If there is an EOS symbol in outputs, cut them at that point.
-  if data_utils.EOS_ID in outputs:
-      outputs = outputs[:outputs.index(data_utils.EOS_ID)]
-  
-  # Print out OUTPUT sentence corresponding to outputs.
-  retValue = textUtil.buildRetValue(outputs,rev_out_vocab)
-  print("Output sentence: ",retValue)
-
-  return retValue
-
-def onstart():
-  #Создаем глобальные переменные (сессия тенсорфлоу и обрабатывающая модель)
-  global sess
-  
-  # Выделение видеопамяти на процесс 20%
-  gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.20)
-  sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
-  #sess = tf.Session()
-  
-  global model
-
-  # Создаем модель и загружаем параметры
-  print("Load model")
-  model = create_model(sess, True)
-  model.batch_size = 1  # We decode one sentence at a time.
-
 if __name__ == "__main__":
-  onstart()
-  app.run(host='0.0.0.0', port=FLAGS.port, debug=True, use_reloader=False, threaded=True) #новый порт, чтобы обращаться к нему из веб-приложения, запущенного на JAVA
+  # onstart()
+  core = core.Core(FLAGS)
+  app.run(host='0.0.0.0', port=FLAGS.port, debug=True, use_reloader=False, threaded=True)

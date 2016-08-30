@@ -50,7 +50,7 @@ tf.app.flags.DEFINE_string("data_dir", "/tmp", "Data directory")
 tf.app.flags.DEFINE_string("train_dir", "/tmp", "Training directory.")
 tf.app.flags.DEFINE_integer("max_train_data_size", 0,
                             "Limit on the size of training data (0: no limit).")
-tf.app.flags.DEFINE_integer("steps_per_checkpoint", 200,
+tf.app.flags.DEFINE_integer("steps_per_checkpoint", 400,
                             "How many training steps to do per checkpoint.")
 tf.app.flags.DEFINE_boolean("decode", False,
                             "Set to True for interactive decoding.")
@@ -61,7 +61,8 @@ FLAGS = tf.app.flags.FLAGS
 
 # We use a number of buckets and pad to the closest one for efficiency.
 # See seq2seq_model.Seq2SeqModel for details of how they work.
-_buckets = ttpSettings.buckets
+# _buckets = ttpSettings.getDefaultBuckets()
+_buckets = ttpSettings.test
 
 
 
@@ -137,7 +138,11 @@ def train():
            % FLAGS.max_train_data_size)
     dev_set = read_data(in_dev, out_dev)
     train_set = read_data(in_train, out_train, FLAGS.max_train_data_size)
+    print ("train set")
+    [print(x) for x in train_set]
     train_bucket_sizes = [len(train_set[b]) for b in xrange(len(_buckets))]
+    print ("bucket sizes")
+    print (train_bucket_sizes)
     train_total_size = float(sum(train_bucket_sizes))
 
     # A bucket scale is a list of increasing numbers from 0 to 1 that we'll use

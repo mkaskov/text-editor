@@ -23,7 +23,9 @@ def sent_splitter(source):
   sentences.extend(re.split(SPLIT, source))
   return [s for s in sentences if s not in emptyStr]
 
-def prepare_encode(t): return t.replace('\n', '\n[newline]').replace('...', '[threedot]').replace('. ', '[dot]. ')
+def prepare_encode(t):
+    # t = re.sub("[\s\xA0]+", " ", t).strip()
+    return t.replace('\n', '\n[newline]').replace('...', '[threedot]').replace('. ', '[dot]. ')
 
 def prepare_decode(t): return t.replace('[newline]', '').replace('[threedot]', '...').replace('[dot]', '. ')
 
@@ -41,10 +43,20 @@ def buildRetValue(outputs,vocab):
 
 def getConvertedWord(id,outputs,vocab):
     word = vocab[outputs[id]]
+    prevWord = None
+    nextWord = None
+    if id != 0: prevWord = vocab[outputs[id - 1]]
+    if id + 1 < len(outputs): nextWord = vocab[outputs[id + 1]]
+
     if id==0: word = word.decode('utf8').capitalize().encode('utf8')
 
     state = getWordState(id,outputs,vocab,word)
-    if id + 1 < len(outputs): nextWord = vocab[outputs[id + 1]]
+
+    # if not (prevWord is None) and not (nextWord is None): print('state: ', state, ' prev_word: ', prevWord,
+    #                                                               ' current_word: ', word, ' next_word: ', nextWord)
+    # elif not (prevWord is None): print ('state: ',state,' prev_word: ',prevWord,' current_word: ',word)
+    # elif not (nextWord is None): print ('state: ',state,' current_word: ',word,' next_word: ',nextWord)
+
 
     for case in switch(state):
         if case('digit'): return word
@@ -52,15 +64,15 @@ def getConvertedWord(id,outputs,vocab):
         if case('afterSpace'): return word + ' '
         if case('afterSpaceHasNext'):
             if ')'==word and nextWord.isdigit(): return word + ' '
-            if id != 0 and not vocab[outputs[id-1]].isdigit() and nextWord.isdigit(): return word + ' '
-            if nextWord.isdigit() or '.' == nextWord: return word
+            elif prevWord is not None and not prevWord.isdigit() and nextWord.isdigit(): return word + ' '
+            elif nextWord.isdigit() or '.' == nextWord: return word
             else: return word + ' '
         if case('hasNextWord'):
             if nextWord.isdigit() or '%'==nextWord: return ' ' + word + ' '
-            if nextWord in afterSpace: return ' ' + word
+            elif nextWord in afterSpace: return ' ' + word
             else: return ' ' + word + ' '
         if case('hasBeforeSpace'):
-            if id + 1 < len(outputs) and nextWord in afterSpace: return word
+            if nextWord is not None and nextWord in afterSpace: return word
             else: return word + ' '
         if case(): return ' ' + word + ' '
 

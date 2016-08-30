@@ -11,51 +11,64 @@ from slugify import Slugify, UniqueSlugify, slugify, slugify_unicode
 from slugify import slugify_url, slugify_filename
 from slugify import slugify_ru, slugify_de
 
-sentense = 'Толщина металлического листа 0,6 мм. Тип стали: рулонная, холодной прокатки. Полимерное покрытие: пурал. Толщина защитного слоя, мкм: 50. Текстура покрытия: матовая. Цвет по таблице цветов RAL: RAL3011.'
-print (type(sentense))
-
-def sentence_splitter(source,sentenses = []):
-  SPLIT = re.compile("(\. )")
-  sentenses.extend(re.split(SPLIT, source.decode('utf-8')))
-  return [(s if s[-1:] == '.' else s + '.').encode('utf8') for s in sentenses if (s != '. ')]
-
-sentArray = sentence_splitter(sentense)
-[print(s) for s in sentArray]
-
-print ('          Hello        '.strip() )
-
-print (('аываы'.strip().capitalize()))
-
-zzz = 'аываы FSDF'.decode('utf-8').capitalize()
-
-print (zzz)
-
-
-# slugify = Slugify(translate=None,capitalize=True, separator=' ')
-
-# print (slugify(' ываываыв'))  # 'any-text')
-
-s = "sdfs sdfsd     sdfsfd"
-s = re.sub("[\s]+", " ", s).strip()
-
-print (s)
-
-s = " Габаритные размеры :   110 х 140 х 35 мм.".decode('utf-8')
-s = re.sub("[\s\xA0]+", " ", s).strip()
-# s = re.sub("[\s]+", " ", s).strip()
-
-print (s)
+# sentense = 'Толщина металлического листа 0,6 мм. Тип стали: рулонная, холодной прокатки. Полимерное покрытие: пурал. Толщина защитного слоя, мкм: 50. Текстура покрытия: матовая. Цвет по таблице цветов RAL: RAL3011.'
+# print (type(sentense))
 #
-# s = " Габаритные размеры :   110 х 140 х 35 мм."
-# s = re.sub('[\s]+','', s.rstrip())
+# def sentence_splitter(source,sentenses = []):
+#   SPLIT = re.compile("(\. )")
+#   sentenses.extend(re.split(SPLIT, source.decode('utf-8')))
+#   return [(s if s[-1:] == '.' else s + '.').encode('utf8') for s in sentenses if (s != '. ')]
+#
+# sentArray = sentence_splitter(sentense)
+# [print(s) for s in sentArray]
+#
+# print ('          Hello        '.strip() )
+#
+# print (('аываы'.strip().capitalize()))
+#
+# zzz = 'аываы FSDF'.decode('utf-8').capitalize()
+#
+# print (zzz)
+#
+#
+# # slugify = Slugify(translate=None,capitalize=True, separator=' ')
+#
+# # print (slugify(' ываываыв'))  # 'any-text')
+#
+# s = "sdfs sdfsd     sdfsfd"
+# s = re.sub("[\s]+", " ", s).strip()
+#
+# print (s)
+#
+# s = " Габаритные размеры :   110 х 140 х 35 мм.".decode('utf-8')
+# s = re.sub("[\s\xA0]+", " ", s).strip()
+# # s = re.sub("[\s]+", " ", s).strip()
+#
+# print (s)
+# #
+# # s = " Габаритные размеры :   110 х 140 х 35 мм."
+# # s = re.sub('[\s]+','', s.rstrip())
+# # print (s)
+#
+#
+#
+# print ('Number of arguments:', len(sys.argv), 'arguments.')
+# print ('Argument List:', str(sys.argv))
+#
+# s = "[li]поперечных >81 (8,1) до 133 (13,3)"
+# s = s[4:]
+#
 # print (s)
 
+# sentence = '38 Клей плиточный <Юнис Гранит> или эквивалент с характеристиками: Температура проведения работ От +5 °C до +30 °C. Пропорции смешивания 1 часть воды на 4,4—5,5 части сухой смеси. Оптимальная толщина слоя 3—10 мм. Расход при нанесении гребёнкой 6х6 мм 3,5 кг/м². Минимальное время жизни раствора 180 минут. Рабочее время (после нанесения на поверхность) 15 минут. Время корректировки плитки 10 минут. Время до пешего хождения 24 часа. Адгезия с основанием 15 кг/см² (1,5 МПа). Удерживаемый вес 100 кг/м². Морозостойкость Более 35 циклов. Температура эксплуатации От -50 до +50 мВт/м·К'
+# sentence = re.sub("[\s\xA0]+", " ", sentence.decode('utf-8')).strip()
+# _TTP_WORD_SPLIT = re.compile(ur"ГОСТ\s[\d]+\-?[\d]+|[а-яА-Я]+\/[а-яА-Я\d]+\.{1}[а-яА-Я\d]+\.{1}|[а-яА-Я]+\/\([^()]+\)|[^\s\d.,():]+\d?\/[^\s.,():]+|м{1,2}[\d⁰¹²³⁴⁵⁶⁷⁸⁹]|см[\d⁰¹²³⁴⁵⁶⁷⁸⁹]|дм[\d⁰¹²³⁴⁵⁶⁷⁸⁹]|[a-zA-Zа-яА-ЯёЁ]*[^\s\d.!?,:;()\"\'<>%«»±^…\-*=/\xA0]|[\d()!?\'\"<>%,:;±«»^…\-*=/]|\.{3}|\.{1}")
+#
+# words = re.findall(_TTP_WORD_SPLIT, sentence)
+# [print(w.encode('utf-8')) for w in words if w]
+# print ('-----------------------------')
 
-
-print ('Number of arguments:', len(sys.argv), 'arguments.')
-print ('Argument List:', str(sys.argv))
-
-s = "[li]поперечных >81 (8,1) до 133 (13,3)"
-s = s[4:]
-
-print (s)
+test = 'ГОСТ      28013-98'
+print (test)
+test = re.sub("[\s\xA0]+", " ", test)
+print (test)
