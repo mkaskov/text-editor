@@ -138,8 +138,6 @@ def train():
            % FLAGS.max_train_data_size)
     dev_set = read_data(in_dev, out_dev)
     train_set = read_data(in_train, out_train, FLAGS.max_train_data_size)
-    print ("train set")
-    [print(x) for x in train_set]
     train_bucket_sizes = [len(train_set[b]) for b in xrange(len(_buckets))]
     print ("bucket sizes")
     print (train_bucket_sizes)
