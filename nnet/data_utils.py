@@ -34,8 +34,12 @@ UNK_ID = 3
 _WORD_SPLIT = re.compile("([,.][ ]+|[!?\"':;)(])") # v2 (not tested)
 _DIGIT_RE = re.compile(r"\d")
 # _TTP_WORD_SPLIT = re.compile(ur"[а-яА-Я][\/][м]*[0-9]{1}|[м]*[0-9]{1}|[a-zA-Zа-яА-Я\-\/\*]*[^\s0-9\.!?,:;()\"\'<>%«»±…]|[0-9()!?\'\"<>%,:;±«»^…]|\.{3}|\.{1}")
-_TTP_WORD_SPLIT = re.compile(ur"ГОСТ\s[\d]+\-?[\d]+|[а-яА-Я]+\/[а-яА-Я\d]+\.{1}[а-яА-Я\d]+\.{1}|[а-яА-Я]+\/\([^()]+\)|[^\s\d.,():]+\d?\/[^\s.,():]+|м{1,2}[\d⁰¹²³⁴⁵⁶⁷⁸⁹]|см[\d⁰¹²³⁴⁵⁶⁷⁸⁹]|дм[\d⁰¹²³⁴⁵⁶⁷⁸⁹]|[a-zA-Zа-яА-ЯёЁ]*[^\s\d.!?,:;()\"\'<>%«»±^…\-*=/\xA0]|[\d()!?\'\"<>%,:;±«»^…\-*=/]|\.{3}|\.{1}")
-# гост\s[\d.]+\-?[\d]+|ГОСТ\s[\d.]+\-?[\d]+|[а-яА-Я]+\/[а-яА-Я\d]+\.{1}[а-яА-Я\d]+\.{1}|[а-яА-Я]+\/\([^()]+\)|[^\s\d.,!?():;/\\|<>"'=–\-+_*\xA0IV\[\]≥≤~”“_ₒ∙°··]+\d?\/[^\s.,!?():;/\\|<>"'=–\-+_*\xA0IV\[\]≥≤~”“_ₒ∙°··]+|м{1,2}[\d⁰¹²³⁴⁵⁶⁷⁸⁹]|см[\d⁰¹²³⁴⁵⁶⁷⁸⁹]|дм[\d⁰¹²³⁴⁵⁶⁷⁸⁹]|[a-zA-Zа-яА-ЯёЁ]*[^\s\d.\\!?,:;()\"\'<>%«»±^…–\-*=/+\xA0@·∙\[\]°ₒ”“·≥≤~_]|[\d()\\!?\'\"<>%,:;±«»^…–\-*=/+@·∙\[\]°ₒ”“·≥≤~_]|\.{3}|\.{1}
+
+# 29.08.16
+#  _TTP_WORD_SPLIT = re.compile(ur"ГОСТ\s[\d]+\-?[\d]+|[а-яА-Я]+\/[а-яА-Я\d]+\.{1}[а-яА-Я\d]+\.{1}|[а-яА-Я]+\/\([^()]+\)|[^\s\d.,():]+\d?\/[^\s.,():]+|м{1,2}[\d⁰¹²³⁴⁵⁶⁷⁸⁹]|см[\d⁰¹²³⁴⁵⁶⁷⁸⁹]|дм[\d⁰¹²³⁴⁵⁶⁷⁸⁹]|[a-zA-Zа-яА-ЯёЁ]*[^\s\d.!?,:;()\"\'<>%«»±^…\-*=/\xA0]|[\d()!?\'\"<>%,:;±«»^…\-*=/]|\.{3}|\.{1}")
+
+# 1.09.16
+_TTP_WORD_SPLIT = re.compile(ur"гост\s[\d.]+—?\-?[\d]+|ГОСТ\s[\d.]+—?\-?[\d]+|[а-яА-Я]+\/[а-яА-Я\d]+\.{1}[а-яА-Я\d]+\.{1}|[а-яА-Я]+\/\([^()]+\)|[^\s\d.,!?():;/\\|<>\"\'=–—\-+_*\xA0IV\[\]≥≤~”“_ₒ∙°··\x23«»]+\d?\/[^\s.,!?():;/\\|<>\"\'=–—\-+_*\xA0IV\[\]≥≤~”“_ₒ∙°··\x23«»]+|м{1,2}[\d⁰¹²³⁴⁵⁶⁷⁸⁹]|см[\d⁰¹²³⁴⁵⁶⁷⁸⁹]|дм[\d⁰¹²³⁴⁵⁶⁷⁸⁹]|[a-zA-Zа-яА-ЯёЁ]*[^\s\d.\\!?,:;()\"\'<>%«»±^…–—\-*=/+\xA0@·∙\[\]°ₒ”“·≥≤~_\x23]|[\d()\\!?\'\"<>%,:;±«»^…–—\-*=/+@·∙\[\]°ₒ”“·≥≤~_\x23]|\.{3}|\.{1}")
 
 def basic_tokenizer(sentence):
   """Very basic tokenizer: split the sentence into a list of tokens."""
@@ -44,19 +48,13 @@ def basic_tokenizer(sentence):
     words.extend(re.split(_WORD_SPLIT, space_separated_fragment))
   return [w for w in words if w]
 
-
-def tokenizer_tpp(sentence):
-  """простой токенизер с несколько изменной схемой нарезания слов. Так же как и простой токенизер превращает предложение в список токенов."""
-  sentence = sentence.decode('utf-8')
-  sentence = re.sub("[\s\xA0]+", " ", sentence).strip()
-  # sentence = sentence.lower() # привести текст к нижнему регистру
-  words = []
-  words = re.findall(_TTP_WORD_SPLIT, sentence)
+def tokenizer_tpp(t, _word_split):
+  sentence = re.sub("[\s\xA0]+", " ", t.decode('utf-8'))
+  words = re.findall(_word_split, sentence)
   return [w.encode('utf-8') for w in words if w]  
 
-
 def create_vocabulary(vocabulary_path, data_path, max_vocabulary_size,
-                      tokenizer=None, normalize_digits=True):
+                      tokenizer=None, normalize_digits=True,ext_TTP_WORD_SPLIT=_TTP_WORD_SPLIT):
   """Create vocabulary file (if it does not exist yet) from data file.
 
   Data file is assumed to contain one sentence per line. Each sentence is
@@ -75,6 +73,7 @@ def create_vocabulary(vocabulary_path, data_path, max_vocabulary_size,
   """
   if not gfile.Exists(vocabulary_path):
     print("Creating vocabulary %s from data %s" % (vocabulary_path, data_path))
+    # print(ext_TTP_WORD_SPLIT.pattern)
     vocab = {}
     with gfile.GFile(data_path, mode="r") as f:
       counter = 0
@@ -82,7 +81,7 @@ def create_vocabulary(vocabulary_path, data_path, max_vocabulary_size,
         counter += 1
         if counter % 100000 == 0:
           print("  processing line %d" % counter)
-        tokens = tokenizer(line) if tokenizer else tokenizer_tpp(line)
+        tokens = tokenizer(line) if tokenizer else tokenizer_tpp(line,ext_TTP_WORD_SPLIT)
         for w in tokens:
           word = re.sub(_DIGIT_RE, "0", w) if normalize_digits else w
           if word in vocab:
@@ -129,7 +128,7 @@ def initialize_vocabulary(vocabulary_path):
 
 
 def sentence_to_token_ids(sentence, vocabulary,
-                          tokenizer=None, normalize_digits=True):
+                          tokenizer=None, normalize_digits=True,ext_TTP_WORD_SPLIT=_TTP_WORD_SPLIT):
   """Convert a string to list of integers representing token-ids.
 
   For example, a sentence "I have a dog" may become tokenized into
@@ -150,9 +149,7 @@ def sentence_to_token_ids(sentence, vocabulary,
   if tokenizer:
     words = basic_tokenizer(sentence)
   else:
-    words = tokenizer_tpp(sentence)
-    # for elem in words:
-      # print (elem)
+    words = tokenizer_tpp(sentence,ext_TTP_WORD_SPLIT)
   if not normalize_digits:
     return [vocabulary.get(w, UNK_ID) for w in words]
   # Normalize digits by 0 before looking words up in the vocabulary.
@@ -160,7 +157,7 @@ def sentence_to_token_ids(sentence, vocabulary,
 
 
 def data_to_token_ids(data_path, target_path, vocabulary_path,
-                      tokenizer=None, normalize_digits=True):
+                      tokenizer=None, normalize_digits=True,ext_TTP_WORD_SPLIT=_TTP_WORD_SPLIT):
   """Tokenize data file and turn into token-ids using given vocabulary file.
 
   This function loads data line-by-line from data_path, calls the above
@@ -177,6 +174,7 @@ def data_to_token_ids(data_path, target_path, vocabulary_path,
   """
   if not gfile.Exists(target_path):
     print("Tokenizing data in %s" % data_path)
+    print(ext_TTP_WORD_SPLIT.pattern)
     vocab, _ = initialize_vocabulary(vocabulary_path)
     with gfile.GFile(data_path, mode="r") as data_file:
       with gfile.GFile(target_path, mode="w") as tokens_file:
@@ -186,11 +184,11 @@ def data_to_token_ids(data_path, target_path, vocabulary_path,
           if counter % 100000 == 0:
             print("  tokenizing line %d" % counter)
           token_ids = sentence_to_token_ids(line, vocab, tokenizer,
-                                            normalize_digits)
+                                            normalize_digits,ext_TTP_WORD_SPLIT)
           tokens_file.write(" ".join([str(tok) for tok in token_ids]) + "\n")
 
 
-def prepare_data(data_dir, in_vocabulary_size, out_vocabulary_size):
+def prepare_data(data_dir, in_vocabulary_size, out_vocabulary_size,ext_TTP_WORD_SPLIT=_TTP_WORD_SPLIT):
   """Сreate vocabularies and tokenize train and dev data.
 
   Args:
@@ -216,20 +214,20 @@ def prepare_data(data_dir, in_vocabulary_size, out_vocabulary_size):
   # Create vocabularies of the appropriate sizes.
   in_vocab_path = os.path.join(data_dir, "vocab%d.input" % in_vocabulary_size)
   out_vocab_path = os.path.join(data_dir, "vocab%d.output" % out_vocabulary_size)
-  create_vocabulary(in_vocab_path, train_path + ".input", in_vocabulary_size, normalize_digits=False)
-  create_vocabulary(out_vocab_path, train_path + ".output", out_vocabulary_size, normalize_digits=False)
+  create_vocabulary(in_vocab_path, train_path + ".input", in_vocabulary_size, normalize_digits=False,ext_TTP_WORD_SPLIT=ext_TTP_WORD_SPLIT)
+  create_vocabulary(out_vocab_path, train_path + ".output", out_vocabulary_size, normalize_digits=False,ext_TTP_WORD_SPLIT=ext_TTP_WORD_SPLIT)
 
   # Create token ids for the training data.
   in_train_ids_path = train_path + (".ids%d.input" % in_vocabulary_size)
   out_train_ids_path = train_path + (".ids%d.output" % out_vocabulary_size)
-  data_to_token_ids(train_path + ".input", in_train_ids_path, in_vocab_path, normalize_digits=False)
-  data_to_token_ids(train_path + ".output", out_train_ids_path, out_vocab_path, normalize_digits=False)
+  data_to_token_ids(train_path + ".input", in_train_ids_path, in_vocab_path, normalize_digits=False,ext_TTP_WORD_SPLIT=ext_TTP_WORD_SPLIT)
+  data_to_token_ids(train_path + ".output", out_train_ids_path, out_vocab_path, normalize_digits=False,ext_TTP_WORD_SPLIT=ext_TTP_WORD_SPLIT)
 
   # Create token ids for the development data.
   in_dev_ids_path = dev_path + (".ids%d.input" % in_vocabulary_size)
   out_dev_ids_path = dev_path + (".ids%d.output" % out_vocabulary_size)
-  data_to_token_ids(dev_path + ".input", in_dev_ids_path, in_vocab_path, normalize_digits=False)
-  data_to_token_ids(dev_path + ".output", out_dev_ids_path, out_vocab_path, normalize_digits=False)
+  data_to_token_ids(dev_path + ".input", in_dev_ids_path, in_vocab_path, normalize_digits=False,ext_TTP_WORD_SPLIT=ext_TTP_WORD_SPLIT)
+  data_to_token_ids(dev_path + ".output", out_dev_ids_path, out_vocab_path, normalize_digits=False,ext_TTP_WORD_SPLIT=ext_TTP_WORD_SPLIT)
 
   return (in_train_ids_path, out_train_ids_path,
           in_dev_ids_path, out_dev_ids_path,

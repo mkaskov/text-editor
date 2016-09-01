@@ -8,4 +8,4 @@ echo "Starting seq2seq model..."
 # Select GPU-CPU devices. gpu0 <6, gpu1 6-8, cpu >8
 export TF_MIN_GPU_MULTIPROCESSOR_COUNT=5
 
-python /home/user/Documents/editor/app2web.py --data_dir /home/user/Documents/editor_data/text_editor_v15/ --train_dir /home/user/Documents/editor_data/text_editor_v15/checkpoints/ --size=512 --port=5002
+python /home/user/Documents/editor/app2web.py --data_dir /home/user/Documents/editor_data/text_editor_v15/ --train_dir /home/user/Documents/editor_data/text_editor_v15/checkpoints/ --port=5002 --reduce_gpu=True

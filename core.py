@@ -1,13 +1,29 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
+# by Max8mk
+"""Binary for training editor models and decoding from them.
+
+Running this program without --decode will enter into --data_dir
+and tokenize data in a very basic way,
+and then start training a model saving checkpoints to --train_dir.
+
+Running with --decode starts an interactive loop so you can see how
+the current checkpoint editor works.
+
+See the following papers for more information on neural translation models.
+ * http://arxiv.org/abs/1409.3215
+ * http://arxiv.org/abs/1409.0473
+ * http://arxiv.org/abs/1412.2007
+"""
+
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from util import textUtil, ttpSettings
 import os
 from nnet import data_utils, seq2seq_model
+from util import logger as Logger
 import tensorflow as tf
 import numpy as np
 
@@ -15,6 +31,7 @@ import math
 import random
 import sys
 import time
+import datetime
 
 from six.moves import xrange  # pylint: disable=redefined-builtin
 
@@ -27,46 +44,106 @@ class Core(object):
     global in_vocab
     global out_vocab_path
     global rev_out_vocab
+    global _TTP_WORD_SPLIT
 
     # We use a number of buckets and pad to the closest one for efficiency.
     # See seq2seq_model.Seq2SeqModel for details of how they work.
     global _buckets
 
-    def __init__(self,FLAGS):
+    def __init__(self,FLAGS,_TTP_WORD_SPLIT,_buckets,web=False,forward_only = False):
         self.FLAGS = FLAGS
-        self._buckets = ttpSettings.getDefaultBuckets()
+        self._buckets = _buckets
+        self._TTP_WORD_SPLIT = _TTP_WORD_SPLIT
+        self.sess = None
+        self.in_vocab_path = None
+        self.out_vocab_path = None
+        self.in_vocab = None
+        self.rev_out_vocab = None
 
-        # Load vocabularies.
-        self.in_vocab_path = os.path.join(FLAGS.data_dir, "vocab%d.input" % FLAGS.in_vocab_size)
-        self.out_vocab_path = os.path.join(FLAGS.data_dir, "vocab%d.output" % FLAGS.out_vocab_size)
-        self.in_vocab, _ = data_utils.initialize_vocabulary(self.in_vocab_path)
-        _, self.rev_out_vocab = data_utils.initialize_vocabulary(self.out_vocab_path)
-
+        self.printStartParams (FLAGS,_TTP_WORD_SPLIT,_buckets,web,forward_only)
 
         # Выделение видеопамяти на процесс 20%
         gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.20)
-        self.sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
+
+        if FLAGS.reduce_gpu: self.sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
+        else: self.sess = tf.Session()
+
+        if web:
+            self.in_vocab_path = os.path.join(FLAGS.data_dir, "vocab%d.input" % FLAGS.in_vocab_size)
+            self.out_vocab_path = os.path.join(FLAGS.data_dir, "vocab%d.output" % FLAGS.out_vocab_size)
+            self.in_vocab, _ = data_utils.initialize_vocabulary(self.in_vocab_path)
+            _, self.rev_out_vocab = data_utils.initialize_vocabulary(self.out_vocab_path)
 
         # Создаем модель и загружаем параметры
         print("Creating %d layers of %d units." % (FLAGS.num_layers, FLAGS.size))
-        self.model = self.create_model(self.sess, True)
-        self.model.batch_size = 1  # We decode one sentence at a time.
+        self.model = self.create_model(self.sess, forward_only)
+        if web: self.model.batch_size = 1  # We decode one sentence at a time.
+
+    def printStartParams(self,FLAGS,_TTP_WORD_SPLIT,_buckets,web,forward_only):
+        # sys.stdout = Logger.Logger(FLAGS.data_dir + "log.txt")
+        print("------------------------Starting----------------------------------------------------------------")
+        print("Current date and time: ", datetime.datetime.now().strftime("%Y-%m-%d %H:%M"))
+        print ("------------------------Start parameters of neural network--------------------------------------")
+
+        if web: print ("Mode: web mode")
+        else: print ("Mode: train mode")
+
+        if forward_only: print ("forward only: true")
+        else: print ("forward only: false")
+
+        print ("Buckets: ",_buckets)
+
+        print ("RegEx patter: ", _TTP_WORD_SPLIT.pattern)
+
+        print ("Learning rate: ", FLAGS.learning_rate)
+
+        print("learning_rate_decay_factor: ", FLAGS.learning_rate_decay_factor)
+
+        print("max_gradient_norm: ", FLAGS.max_gradient_norm)
+
+        print("batch_size: ", FLAGS.batch_size)
+
+        print("num_layers: ", FLAGS.num_layers)
+
+        print("size: ", FLAGS.size)
+
+        print("in_vocab_size: ", FLAGS.in_vocab_size)
+
+        print("out_vocab_size: ", FLAGS.out_vocab_size)
+
+        print("data_dir: ", FLAGS.data_dir)
+
+        print("train_dir: ", FLAGS.train_dir)
+
+        print("max_train_data_size: ", FLAGS.max_train_data_size)
+
+        print("steps_per_checkpoint: ", FLAGS.steps_per_checkpoint)
+
+        print("decode mode: ", FLAGS.decode)
+
+        print("self_test mode: ", FLAGS.self_test)
+
+        print("reduce gpu usage: ", FLAGS.reduce_gpu)
+
+        print ("------------------------------------------------------------------------------------------------")
 
     def create_model(self,session, forward_only):
       FLAGS=self.FLAGS
       _buckets = self._buckets
 
-      """Initialize model or load parameters in session."""
+      """Create model and initialize or load parameters in session."""
       model = seq2seq_model.Seq2SeqModel(
           FLAGS.in_vocab_size, FLAGS.out_vocab_size, _buckets,
           FLAGS.size, FLAGS.num_layers, FLAGS.max_gradient_norm, FLAGS.batch_size,
-          FLAGS.learning_rate, FLAGS.learning_rate_decay_factor,use_lstm=False,
+          FLAGS.learning_rate, FLAGS.learning_rate_decay_factor,
           forward_only=forward_only)
       ckpt = tf.train.get_checkpoint_state(FLAGS.train_dir)
       if ckpt and tf.gfile.Exists(ckpt.model_checkpoint_path):
         print("Reading model parameters from %s" % ckpt.model_checkpoint_path)
         model.saver.restore(session, ckpt.model_checkpoint_path)
-      else: print("Error! No model toself load!")
+      else:
+        print("Created model with fresh parameters.")
+        session.run(tf.initialize_all_variables())
       return model
 
     def recognition(self,sentence):
@@ -75,9 +152,9 @@ class Core(object):
         rev_out_vocab = self.rev_out_vocab
         sess = self.sess
         model = self.model
+        _TTP_WORD_SPLIT = self._TTP_WORD_SPLIT
 
-        token_ids = data_utils.sentence_to_token_ids(sentence, in_vocab,
-                                                     normalize_digits=False)  # Get token-ids for the input sentence.
+        token_ids = data_utils.sentence_to_token_ids(sentence, in_vocab, normalize_digits=False,ext_TTP_WORD_SPLIT=_TTP_WORD_SPLIT)  # Get token-ids for the input sentence.
 
         # для справки выводим токены введёного текста
         print("Input sentence: ", sentence)
@@ -101,6 +178,7 @@ class Core(object):
         return outputs, rev_out_vocab
 
     def read_data(self,source_path, target_path, max_size=None):
+        _buckets = self._buckets
         """Read data from source and target files and put into buckets.
 
         Args:
@@ -135,6 +213,9 @@ class Core(object):
                             data_set[bucket_id].append([source_ids, target_ids])
                             break
                     source, target = source_file.readline(), target_file.readline()
+                print("------------------------------------------------------------------------------------------------")
+                print("Total lines: ", counter)
+                print("------------------------------------------------------------------------------------------------")
         return data_set
 
     def train(self):
@@ -142,12 +223,13 @@ class Core(object):
         _buckets = self._buckets
         model = self.model
         sess = self.sess
+        _TTP_WORD_SPLIT = self._TTP_WORD_SPLIT
 
         # """Train a INPUT->OUTPUT editor model."""
         # Prepare data.
         print("Preparing data in %s" % FLAGS.data_dir)
         in_train, out_train, in_dev, out_dev, _, _ = data_utils.prepare_data(
-            FLAGS.data_dir, FLAGS.in_vocab_size, FLAGS.out_vocab_size)
+            FLAGS.data_dir, FLAGS.in_vocab_size, FLAGS.out_vocab_size,_TTP_WORD_SPLIT)
 
         # Read data into buckets and compute their sizes.
         print("Reading development and training data (limit: %d)."
@@ -156,6 +238,13 @@ class Core(object):
         train_set = self.read_data(in_train, out_train, FLAGS.max_train_data_size)
         train_bucket_sizes = [len(train_set[b]) for b in xrange(len(_buckets))]
         train_total_size = float(sum(train_bucket_sizes))
+
+        print("------------------------------------------------------------------------------------------------")
+        print("bucket sizes")
+        print(train_bucket_sizes)
+        print("train total size")
+        print(train_total_size)
+        print("------------------------------------------------------------------------------------------------")
 
         # A bucket scale is a list of increasing numbers from 0 to 1 that we'll use
         # to select a bucket. Length of [scale[i], scale[i+1]] is proportional to
@@ -189,7 +278,7 @@ class Core(object):
                 # Print statistics for the previous epoch.
                 perplexity = math.exp(loss) if loss < 300 else float('inf')
                 print("global step %d learning rate %.4f step-time %.2f perplexity "
-                      "%.2f" % (model.global_step.eval(), model.learning_rate.eval(),
+                      "%.2f" % (model.global_step.eval(sess), model.learning_rate.eval(sess),
                                 step_time, perplexity))
                 # Decrease learning rate if no improvement was seen over last 3 times.
                 if len(previous_losses) > 2 and loss > max(previous_losses[-3:]):
@@ -214,6 +303,7 @@ class Core(object):
         model = self.model
         FLAGS = self.FLAGS
         _buckets = self._buckets
+        _TTP_WORD_SPLIT = self._TTP_WORD_SPLIT
 
         # Load vocabularies.
         in_vocab_path = os.path.join(FLAGS.data_dir,
@@ -229,7 +319,7 @@ class Core(object):
         sentence = sys.stdin.readline()
         while sentence:
             # Get token-ids for the input sentence.
-            token_ids = data_utils.sentence_to_token_ids(sentence, in_vocab, normalize_digits=False)
+            token_ids = data_utils.sentence_to_token_ids(sentence, in_vocab, normalize_digits=False,ext_TTP_WORD_SPLIT=_TTP_WORD_SPLIT)
             # Which bucket does it belong to?
             bucket_id = min([b for b in xrange(len(_buckets))
                              if _buckets[b][0] > len(token_ids)])

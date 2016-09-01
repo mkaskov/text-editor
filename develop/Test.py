@@ -68,7 +68,27 @@ from slugify import slugify_ru, slugify_de
 # [print(w.encode('utf-8')) for w in words if w]
 # print ('-----------------------------')
 
-test = 'ГОСТ      28013-98'
-print (test)
-test = re.sub("[\s\xA0]+", " ", test)
-print (test)
+# test = 'ГОСТ      28013-98'
+# print (test)
+# test = re.sub("[\s\xA0]+", " ", test)
+# print (test)
+#
+# bucketsText = '[(5, 5);(10, 10);(30, 30);(50, 50);(70, 70);(110,110)]'
+# bucketsText = bucketsText.split(';')
+#
+# _buckets = []
+# for elem in bucketsText :
+#     nums = re.findall('\d+', elem)
+#     _buckets.append((int(nums[0]),int(nums[1])))
+#
+# print (_buckets)
+
+string = "sdfsdf sdfsd 22222222 sdgdfgd машина"
+string= string.decode('utf-8')
+params =ur'[a-zA-Zа-яА-ЯёЁ]*[^\s\d.\\!?,:;()\"\'<>%«»±^…–\-*=/+\xA0@·∙\[\]°ₒ”“·≥≤~_]'
+
+# this_word_split= re.compile(ur'{}'.format(params))
+this_word_split= re.compile(params)
+words = re.findall(this_word_split, string)
+
+[print(x) for x in words]
