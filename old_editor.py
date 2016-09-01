@@ -32,8 +32,8 @@ import tensorflow as tf
 from six.moves import xrange  # pylint: disable=redefined-builtin
 
 from nnet import data_utils, seq2seq_model
-from util import ttpSettings
 import datetime
+import initialization
 
 # by default as translate model
 tf.app.flags.DEFINE_float("learning_rate", 0.5, "Learning rate.")
@@ -63,7 +63,7 @@ FLAGS = tf.app.flags.FLAGS
 # We use a number of buckets and pad to the closest one for efficiency.
 # See seq2seq_model.Seq2SeqModel for details of how they work.
 # _buckets = ttpSettings.getDefaultBuckets()
-_buckets = ttpSettings.getDefaultBuckets()
+_buckets = initialization.getDefaultBuckets()
 
 
 

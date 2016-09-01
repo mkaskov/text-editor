@@ -10,7 +10,11 @@ import tensorflow as tf
 import sys
 import os.path
 
-from util import ttpSettings
+buckets = [(5, 10), (10, 15), (30, 35), (50, 55), (70, 75), (100, 110)]
+buckets_v2 = [(5, 5), (10, 10), (30, 30), (50, 50), (70, 70), (100, 100)]
+test =  [(5, 5),(10, 10), (30, 30), (50, 50), (70, 70), (110,110)]
+
+def getDefaultBuckets(): return buckets_v2
 
 def getConfig(config_file):
     config_file+='model.ini'
@@ -54,7 +58,7 @@ def getParams():
     value_steps_per_checkpoint = 400
     value_default_port = 5002
     _TTP_WORD_SPLIT = re.compile(ur"ГОСТ\s[\d]+\-?[\d]+|[а-яА-Я]+\/[а-яА-Я\d]+\.{1}[а-яА-Я\d]+\.{1}|[а-яА-Я]+\/\([^()]+\)|[^\s\d.,():]+\d?\/[^\s.,():]+|м{1,2}[\d⁰¹²³⁴⁵⁶⁷⁸⁹]|см[\d⁰¹²³⁴⁵⁶⁷⁸⁹]|дм[\d⁰¹²³⁴⁵⁶⁷⁸⁹]|[a-zA-Zа-яА-ЯёЁ]*[^\s\d.!?,:;()\"\'<>%«»±^…\-*=/\xA0]|[\d()!?\'\"<>%,:;±«»^…\-*=/]|\.{3}|\.{1}")
-    _buckets = ttpSettings.getDefaultBuckets()
+    _buckets = getDefaultBuckets()
 
     #read data from model.ini, if file exist
     data_dir = None
