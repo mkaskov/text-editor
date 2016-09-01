@@ -54,5 +54,5 @@ def batch_recognition(sentences):
 
 if __name__ == "__main__":
   FLAGS,_TTP_WORD_SPLIT,_buckets = initialization.getParams()
-  core = Core.Core(FLAGS,_TTP_WORD_SPLIT,_buckets,web=True,forward_only = True)
+  core = Core.Core(FLAGS,_TTP_WORD_SPLIT,_buckets,web=True,reduce_gpu=True,forward_only = True)
   app.run(host='0.0.0.0', port=FLAGS.port, debug=True, use_reloader=False, threaded=True)

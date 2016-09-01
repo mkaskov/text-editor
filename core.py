@@ -49,7 +49,7 @@ class Core(object):
     # See seq2seq_model.Seq2SeqModel for details of how they work.
     global _buckets
 
-    def __init__(self,FLAGS,_TTP_WORD_SPLIT,_buckets,web=False,forward_only = False):
+    def __init__(self,FLAGS,_TTP_WORD_SPLIT,_buckets,web=False,reduce_gpu=False,forward_only = False):
         self.FLAGS = FLAGS
         self._buckets = _buckets
         self._TTP_WORD_SPLIT = _TTP_WORD_SPLIT
@@ -59,12 +59,12 @@ class Core(object):
         self.in_vocab = None
         self.rev_out_vocab = None
 
-        self.printStartParams (FLAGS,_TTP_WORD_SPLIT,_buckets,web,forward_only)
+        self.printStartParams (FLAGS,_TTP_WORD_SPLIT,_buckets,web,reduce_gpu,forward_only)
 
         # Выделение видеопамяти на процесс 20%
         gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.20)
 
-        if FLAGS.reduce_gpu: self.sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
+        if reduce_gpu: self.sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
         else: self.sess = tf.Session()
 
         if web:
@@ -78,7 +78,7 @@ class Core(object):
         self.model = self.create_model(self.sess, forward_only)
         if web: self.model.batch_size = 1  # We decode one sentence at a time.
 
-    def printStartParams(self,FLAGS,_TTP_WORD_SPLIT,_buckets,web,forward_only):
+    def printStartParams(self,FLAGS,_TTP_WORD_SPLIT,_buckets,web,reduce_gpu,forward_only):
         print("------------------------Starting----------------------------------------------------------------")
         print("Current date and time: ", datetime.datetime.now().strftime("%Y-%m-%d %H:%M"))
         print ("------------------------Start parameters of neural network--------------------------------------")
@@ -121,7 +121,7 @@ class Core(object):
 
         print("self_test mode: ", FLAGS.self_test)
 
-        print("reduce gpu usage: ", FLAGS.reduce_gpu)
+        print("reduce gpu usage: ", reduce_gpu)
 
         print ("------------------------------------------------------------------------------------------------")
 
