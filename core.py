@@ -23,7 +23,6 @@ from __future__ import print_function
 
 import os
 from nnet import data_utils, seq2seq_model
-from util import logger as Logger
 import tensorflow as tf
 import numpy as np
 
@@ -80,7 +79,6 @@ class Core(object):
         if web: self.model.batch_size = 1  # We decode one sentence at a time.
 
     def printStartParams(self,FLAGS,_TTP_WORD_SPLIT,_buckets,web,forward_only):
-        # sys.stdout = Logger.Logger(FLAGS.data_dir + "log.txt")
         print("------------------------Starting----------------------------------------------------------------")
         print("Current date and time: ", datetime.datetime.now().strftime("%Y-%m-%d %H:%M"))
         print ("------------------------Start parameters of neural network--------------------------------------")

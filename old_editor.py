@@ -34,7 +34,6 @@ from six.moves import xrange  # pylint: disable=redefined-builtin
 from nnet import data_utils, seq2seq_model
 from util import ttpSettings
 import datetime
-from util import logger as Logger
 
 # by default as translate model
 tf.app.flags.DEFINE_float("learning_rate", 0.5, "Learning rate.")
@@ -110,7 +109,6 @@ def read_data(source_path, target_path, max_size=None):
 
 
 def printStartParams():
-    # sys.stdout = Logger.Logger(FLAGS.data_dir + "log.txt")
     print("------------------------Starting----------------------------------------------------------------")
     print ("Current date and time: ",datetime.datetime.now().strftime("%Y-%m-%d %H:%M"))
     print("------------------------Start parameters of neural network--------------------------------------")
