@@ -17,8 +17,13 @@ test =  [(5, 5),(10, 10), (30, 30), (50, 50), (70, 70), (110,110)]
 def getDefaultBuckets(): return buckets_v2
 
 def getConfig(config_file):
-    config_file+='model.ini'
-    if not os.path.isfile(config_file): return None
+    config_file+='ini/model.ini'
+    if not os.path.isfile(config_file):
+        print("------------------------------------------------------------------------------------------------")
+        print ('[WARNING] File ',config_file,' not found')
+        print ('[WARNING] Starting with default parameters')
+        print("------------------------------------------------------------------------------------------------")
+        return None
 
     parser = SafeConfigParser()
     parser.read(config_file)

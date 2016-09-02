@@ -34,6 +34,17 @@ import datetime
 
 from six.moves import xrange  # pylint: disable=redefined-builtin
 
+class Unbuffered:
+
+   def __init__(self, stream): self.stream = stream
+
+   def write(self, data):
+       if isinstance(data, unicode): data=data.encode('utf-8')
+       self.stream.write(data)
+       self.stream.flush()
+
+   def flush(self): pass
+
 class Core(object):
 
     global FLAGS
@@ -50,6 +61,7 @@ class Core(object):
     global _buckets
 
     def __init__(self,FLAGS,_TTP_WORD_SPLIT,_buckets,web=False,reduce_gpu=False,forward_only = False):
+        sys.stdout = Unbuffered(sys.stdout)
         self.FLAGS = FLAGS
         self._buckets = _buckets
         self._TTP_WORD_SPLIT = _TTP_WORD_SPLIT
