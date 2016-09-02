@@ -111,19 +111,35 @@ from slugify import slugify_ru, slugify_de
 # logging.error('error')
 # logging.exception('exp')
 
-string = "sdfsdf sdfsd 22222222 sdgdfgd машина"
-print (type(string))
-string= string.decode('utf-8')
-params =ur'[a-zA-Zа-яА-ЯёЁ]*[^\s\d.\\!?,:;()\"\'<>%«»±^…–\-*=/+\xA0@·∙\[\]°ₒ”“·≥≤~_]'
+# string = "sdfsdf sdfsd 22222222 sdgdfgd машина"
+# print (type(string))
+# string= string.decode('utf-8')
+# params =ur'[a-zA-Zа-яА-ЯёЁ]*[^\s\d.\\!?,:;()\"\'<>%«»±^…–\-*=/+\xA0@·∙\[\]°ₒ”“·≥≤~_]'
+#
+# # this_word_split= re.compile(ur'{}'.format(params))
+# this_word_split= re.compile(params)
+# words = re.findall(this_word_split, string)
+#
+# [print(x) for x in words]
+#
+#
+# print (type(string))
+#
+# string= string.encode('utf-8')
+# print (type(string))
+#
+# for x in xrange(1000):
+#     print ('--------------------')
+#     print (x+1)
+#     print ((x+1)%1000)
+#     if (x+1)%1000 == 0: print((x+1)/10)
 
-# this_word_split= re.compile(ur'{}'.format(params))
-this_word_split= re.compile(params)
-words = re.findall(this_word_split, string)
+# if errosNum % linesNum == 0: print ("Processing:",errosNum/linesNum,"%")
 
-[print(x) for x in words]
-
-
-print (type(string))
-
-string= string.encode('utf-8')
-print (type(string))
+# string1 = "Машина "
+# string2 = "Машина"
+#
+# print (re.sub("[\s\xA0]+", "", string1) == re.sub("[\s\xA0]+", "", string2))
+#
+# str = 'I love %(1)s and %(2)s, he loves %(1)s and %(2)s.' % {"1" : "apple", "2" : "pitch"}
+# print (str)
