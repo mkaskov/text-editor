@@ -21,6 +21,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import datetime
 import math
 import os
 import random
@@ -31,9 +32,7 @@ import numpy as np
 import tensorflow as tf
 from six.moves import xrange  # pylint: disable=redefined-builtin
 
-from nnet import data_utils, seq2seq_model
-import datetime
-import initialization
+from nnet import data_utils, seq2seq_model, initialization
 
 # by default as translate model
 tf.app.flags.DEFINE_float("learning_rate", 0.5, "Learning rate.")

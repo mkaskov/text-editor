@@ -18,9 +18,8 @@ from cStringIO import StringIO
 from flask import Flask
 from flask import request, jsonify
 
+from nnet import initialization, core
 from util import textUtil as tU
-import core as Core
-import initialization
 
 # Obtain the flask app object
 app = Flask(__name__)
@@ -54,5 +53,5 @@ def batch_recognition(sentences):
 
 if __name__ == "__main__":
   FLAGS,_TTP_WORD_SPLIT,_buckets = initialization.getParams()
-  core = Core.Core(FLAGS,_TTP_WORD_SPLIT,_buckets,web=True,reduce_gpu=True,forward_only = True)
+  core = core.Core(FLAGS, _TTP_WORD_SPLIT, _buckets, web=True, reduce_gpu=True, forward_only = True)
   app.run(host='0.0.0.0', port=FLAGS.port, debug=True, use_reloader=False, threaded=True)
