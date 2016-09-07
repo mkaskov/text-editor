@@ -95,7 +95,9 @@ class Core(object):
         print("Current date and time: ", datetime.datetime.now().strftime("%Y-%m-%d %H:%M"))
         print ("------------------------Start parameters of neural network--------------------------------------")
 
-        if web: print ("Mode: web mode")
+        if web:
+            print ("Mode: web mode")
+            print ("Port:",FLAGS.port)
         else: print ("Mode: train mode")
 
         if forward_only: print ("forward only: true")

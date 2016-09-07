@@ -11,11 +11,13 @@ import sys
 import re
 import datetime
 
-fileInput = "/home/user/Documents/editor_data/text_editor_v15/dev-data.input"
-fileOutput =  "/home/user/Documents/editor_data/text_editor_v15/dev-data.output"
+#fileInput = "/home/user/datasets/construction_text_base/010916/dev-data.input"
+#fileOutput =  "/home/user/datasets/construction_text_base/010916/dev-data.output"
+fileInput = "/home/user/datasets/construction_text_base/040916/dev-data.input"
+fileOutput =  "/home/user/datasets/construction_text_base/040916/dev-data.output"
 storeOutput = "/home/user/datasets/construction_text_base/tests/"
 url = 'http://server.puremind.tech:5002/decode_sentense'
-linesNum = 10
+linesNum = 100 #number of lines for test
 
 def runTest():
 

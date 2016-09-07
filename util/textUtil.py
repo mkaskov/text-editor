@@ -13,18 +13,32 @@ from cStringIO import StringIO
 
 afterSpace = ['.', ',',':',')','%']
 beforSpace = ['°','(']
-emptyStr = ['. ','','[newline]']
+emptyStr = ['.','','[newline]']
+
+pJoinSent = re.compile(u'\.[А-Я]')
+
+def JoinSent(str):
+    for match in pJoinSent.finditer(str):
+        return str[:match.span()[1]].replace(match.group(),'. '+match.group()[1])+str[match.span()[1]:]
 
 def sent_splitter(source):
   source = decode_from_java(source)
-  source = prepare_encode(source)
+  source = prepare_encode(source.decode('utf-8')+" ")
   sentences = []
+
+  source = re.sub("[\s\xA0]+", " ", source).strip()
+  source = source.replace('[newline]', '\n')
+
+  while len(re.findall(pJoinSent, source)) > 0:
+      source = JoinSent(source)
+
+  source = prepare_encode(source + " ")
+
   SPLIT = re.compile("\. |\n")
   sentences.extend(re.split(SPLIT, source))
-  return [s for s in sentences if s not in emptyStr]
+  return [s.encode('utf-8') for s in sentences if s.strip() not in emptyStr]
 
 def prepare_encode(t):
-    # t = re.sub("[\s\xA0]+", " ", t).strip()
     return t.replace('\n', '\n[newline]').replace('...', '[threedot]').replace('. ', '[dot]. ')
 
 def prepare_decode(t): return t.replace('[newline]', '').replace('[threedot]', '...').replace('[dot]', '. ')

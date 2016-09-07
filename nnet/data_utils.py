@@ -43,17 +43,15 @@ _TTP_WORD_SPLIT = None
 # 1.09.16
 # _TTP_WORD_SPLIT = re.compile(ur"гост\s[\d.]+—?\-?[\d]+|ГОСТ\s[\d.]+—?\-?[\d]+|[а-яА-Я]+\/[а-яА-Я\d]+\.{1}[а-яА-Я\d]+\.{1}|[а-яА-Я]+\/\([^()]+\)|[^\s\d.,!?():;/\\|<>\"\'=–—\-+_*\xA0IV\[\]≥≤~”“_ₒ∙°··\x23«»]+\d?\/[^\s.,!?():;/\\|<>\"\'=–—\-+_*\xA0IV\[\]≥≤~”“_ₒ∙°··\x23«»]+|м{1,2}[\d⁰¹²³⁴⁵⁶⁷⁸⁹]|см[\d⁰¹²³⁴⁵⁶⁷⁸⁹]|дм[\d⁰¹²³⁴⁵⁶⁷⁸⁹]|[a-zA-Zа-яА-ЯёЁ]*[^\s\d.\\!?,:;()\"\'<>%«»±^…–—\-*=/+\xA0@·∙\[\]°ₒ”“·≥≤~_\x23]|[\d()\\!?\'\"<>%,:;±«»^…–—\-*=/+@·∙\[\]°ₒ”“·≥≤~_\x23]|\.{3}|\.{1}")
 
-def basic_tokenizer(sentence):
-  """Very basic tokenizer: split the sentence into a list of tokens."""
+def basic_tokenizer(sentence): #"""Very basic tokenizer: split the sentence into a list of tokens."""
   words = []
   for space_separated_fragment in sentence.strip().split():
     words.extend(re.split(_WORD_SPLIT, space_separated_fragment))
   return [w for w in words if w]
 
 def tokenizer_tpp(t, _word_split):
-  sentence = re.sub("[\s\xA0]+", " ", t.decode('utf-8'))
-  words = re.findall(_word_split, sentence)
-  return [w.encode('utf-8') for w in words if w]  
+  words = re.findall(_word_split, t.decode('utf-8'))
+  return [w.encode('utf-8') for w in words if w]
 
 def create_vocabulary(vocabulary_path, data_path, max_vocabulary_size,
                       tokenizer=None, normalize_digits=True,ext_TTP_WORD_SPLIT=_TTP_WORD_SPLIT):
