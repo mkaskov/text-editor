@@ -24,10 +24,11 @@ def JoinSent(str):
 def sent_splitter(source):
   source = decode_from_java(source)
   source = prepare_encode(source.decode('utf-8')+" ")
+  source = replace_celsius(source)
   sentences = []
 
   source = re.sub("[\s\xA0]+", " ", source).strip()
-  source = source.replace('[newline]', '\n')
+  source = source.replace('[newline]', '\n').replace('[dot]', '')
 
   while len(re.findall(pJoinSent, source)) > 0:
       source = JoinSent(source)
@@ -37,6 +38,12 @@ def sent_splitter(source):
   SPLIT = re.compile("\. |\n")
   sentences.extend(re.split(SPLIT, source))
   return [s.encode('utf-8') for s in sentences if s.strip() not in emptyStr]
+
+def replace_celsius(t):
+    t = t.encode('utf8')
+    t = t.replace(' 0С', ' °С')
+    t = t.decode('utf-8')
+    return t
 
 def prepare_encode(t):
     return t.replace('\n', '\n[newline]').replace('...', '[threedot]').replace('. ', '[dot]. ')
