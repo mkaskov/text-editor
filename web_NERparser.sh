@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Start with logging and data path
-data_dir=/home/user/Documents/editor_data/text_editor_v20
+data_dir=/home/user/Documents/editor_data/NERparser150916
 echo "Text Editor on dataset "$data_dir
 echo "Starting seq2seq model..."
 
@@ -8,4 +8,4 @@ echo "Starting seq2seq model..."
 export TF_MIN_GPU_MULTIPROCESSOR_COUNT=5
 
 mkdir -p $data_dir/log
-python /home/user/Documents/editor/app2web.py --data_dir $data_dir/ --port=5002 2>&1 | tee -a $data_dir/log/weblog.txt
+python /home/user/Documents/editor/app2web_ner.py --data_dir $data_dir/ --port=5003 2>&1 | tee -a $data_dir/log/weblog.txt

@@ -143,3 +143,30 @@ from slugify import slugify_ru, slugify_de
 #
 # str = 'I love %(1)s and %(2)s, he loves %(1)s and %(2)s.' % {"1" : "apple", "2" : "pitch"}
 # print (str)
+
+# s = "машина ехала по обочине"
+#
+# print (s.title())
+
+# import nltk
+# sent = "Albert Einstein spent many years at Princeton University in New Jersey"
+# sent1 = nltk.word_tokenize(sent)
+# sent2 = nltk.pos_tag(sent1)
+# sent3 = nltk.ne_chunk(sent2)
+# print (sent3)
+
+
+_TTP_WORD_SPLIT = re.compile(ur"\[\/K\]|\[K\]|\[At\]|\[\/At\]|гост\s[\d.]+—?\-?[\d]+|ГОСТ\s[\d.]+—?\-?[\d]+|[а-яА-Я]+\/[а-яА-Я\d]+\.{1}[а-яА-Я\d]+\.{1}|[а-яА-Я]+\/\([^()]+\)|[^\s\d.,!?():;/\\|<>\"\'=–—\-+_*\xA0IV\[\]≥≤~”“_ₒ∙°··\x23«»]+\d?\/[^\s.,!?():;/\\|<>\"\'=–—\-+_*\xA0IV\[\]≥≤~”“_ₒ∙°··\x23«»]+|м{1,2}[\d⁰¹²³⁴⁵⁶⁷⁸⁹]|см[\d⁰¹²³⁴⁵⁶⁷⁸⁹]|дм[\d⁰¹²³⁴⁵⁶⁷⁸⁹]|[a-zA-Zа-яА-ЯёЁ]*[^\s\d.\\!?,:;()\"\'<>%«»±^…–—\-*=/+\xA0@·∙\[\]°ₒ”“·≥≤~_\x23]|[\d()\\!?\'\"<>%,:;±«»^…–—\-*=/+@·∙\[\]°ₒ”“·≥≤~_\x23]|\.{3}|\.{1}") #v4
+
+# подсчет количества слов в предложении
+def tokenizer_tpp(sentence):
+    #sentence = sentence.decode('utf-8')
+    words = []
+    try:
+        words = re.findall(_TTP_WORD_SPLIT, sentence)
+    except TypeError:
+        print ('TypeError: ',sentence)
+    return len(words)
+
+s = ur"asdasd asdasdas asdasdas, asdasd 123.."
+print (tokenizer_tpp(s))
