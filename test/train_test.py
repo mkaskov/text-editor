@@ -11,7 +11,7 @@ import sys
 import re
 import datetime
 
-fileDir = "/home/user/datasets/construction_text_base/170916/"
+fileDir = "/home/user/datasets/construction_text_base/210916/"
 fileInput = "dev-data.input"
 fileOutput =  "dev-data.output"
 storeOutput = "/home/user/datasets/construction_text_base/tests/"

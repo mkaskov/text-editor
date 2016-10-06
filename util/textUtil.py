@@ -69,7 +69,7 @@ def getConvertedWord(id,outputs,vocab):
     if id != 0: prevWord = vocab[outputs[id - 1]]
     if id + 1 < len(outputs): nextWord = vocab[outputs[id + 1]]
 
-    if id==0: word = word.decode('utf8').capitalize().encode('utf8')
+    # if id==0: word = word.decode('utf8').capitalize().encode('utf8')
 
     state = getWordState(id,outputs,vocab,word)
 
