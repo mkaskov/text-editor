@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Start with logging and data path
-data_dir=/home/user/Documents/editor_data/text_editor_v21
+data_dir=/home/user/Documents/editor_data/text_editor_v22
 echo "Text Editor on dataset "$data_dir
 echo "Starting seq2seq model..."
 
