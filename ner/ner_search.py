@@ -35,21 +35,25 @@ def getSimpleEntity(result):
 
     return retValue
 
+def checkResolved(entity):
+    for item in entity:
+        if len(item['answer'])==0: return False
+    return True
 
 def search(dataBase,integrity,categoryResult,entityResult,core_):
     global core
     core = core_
 
-    category = ""
-    if len(categoryResult) > 0: category = categoryResult[0]
-
+    category = categoryResult[0] if len(categoryResult) > 0 else ""
     entity = getEntityPandas(entityResult)
-
     searchResultEntity = ner_db.searchInBase(dataBase,category,entity,core)
+
+    entity = getSimpleEntity(searchResultEntity)
+    resolved = checkResolved(entity)
 
     # printPandasResultSearch(integrity, category, searchResultEntity)
 
-    return getSimpleEntity(searchResultEntity)
+    return entity,resolved
 
 
     # for index, row in entity.iterrows():

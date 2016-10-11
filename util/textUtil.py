@@ -108,9 +108,10 @@ def getWordState(id,outputs,vocab,word):
 
 def clearFromDots(tokens):
     retValue = []
-    for i in xrange(0, len(tokens) - 1):
-        retValue.append(tokens[i])
 
-    if len(tokens) > 0 and not tokens[-1] in [".", ",", "!", "?", ":", ";"]: retValue.append(tokens[-1])
+    if len(tokens) > 0:
+        if not tokens[0] in [".", ",", "!", "?", ":", ";"]: retValue.append(tokens[0])
+        for i in xrange(1, len(tokens) - 1): retValue.append(tokens[i])
+        if not tokens[-1] in [".", ",", "!", "?", ":", ";"]: retValue.append(tokens[-1])
 
     return " ".join(retValue)
