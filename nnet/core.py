@@ -91,6 +91,9 @@ class Core(object):
         if web: self.model.batch_size = 1  # We decode one sentence at a time.
 
     def printStartParams(self,FLAGS,_TTP_WORD_SPLIT,_buckets,web,reduce_gpu,forward_only):
+        print ("------------------------Initialization---------------------------------------------------------")
+        print("[Tensorflow version] :", tf.__version__)
+
         print("------------------------Starting----------------------------------------------------------------")
         print("Current date and time: ", datetime.datetime.now().strftime("%Y-%m-%d %H:%M"))
         print ("------------------------Start parameters of neural network--------------------------------------")
@@ -158,7 +161,7 @@ class Core(object):
         session.run(tf.initialize_all_variables())
       return model
 
-    def recognition(self,sentence):
+    def recognition(self,sentence,printStats=False):
         _buckets = self._buckets
         in_vocab = self.in_vocab
         rev_out_vocab = self.rev_out_vocab
@@ -168,9 +171,10 @@ class Core(object):
 
         token_ids = data_utils.sentence_to_token_ids(sentence, in_vocab, normalize_digits=False,ext_TTP_WORD_SPLIT=_TTP_WORD_SPLIT)  # Get token-ids for the input sentence.
 
-        # для справки выводим токены введёного текста
-        print("Input sentence: ", sentence)
-        print('Tokens: ', token_ids)
+        if printStats:
+            # для справки выводим токены введёного текста
+            print("Input sentence: ", sentence)
+            print('Tokens: ', token_ids)
 
         # Which bucket does it belong to?
         detect_bucket_array = [b for b in xrange(len(_buckets)) if _buckets[b][0] > len(token_ids)]

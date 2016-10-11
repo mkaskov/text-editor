@@ -6,28 +6,10 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from cStringIO import StringIO
-from nnet import data_utils
-import re
+from ner import ner_db
 
 import pandas as pd
 import numpy as np
-
-from util import textUtil
-
-def searchInBase(dataBase,category,entity):
-    if len(category) > 0:
-        finalBase = dataBase.loc[dataBase['category'] == category]
-        if len(finalBase) == 0: finalBase = dataBase
-    else:
-        finalBase = dataBase
-
-    for index, row in entity.iterrows():
-        searchValue = textUtil.clearFromDots(data_utils.tokenizer_tpp(row["entity"],core._TTP_WORD_SPLIT))
-        result = finalBase.loc[finalBase['in'] == searchValue]
-        if len(result) > 0: row["answer"] = finalBase.ix[result.iloc[0].name]["out"]
-
-    return entity
 
 def getEntityPandas(entityResult):
     entity = pd.DataFrame({"entity": entityResult}, index=np.arange(1, len(entityResult) + 1))
@@ -46,8 +28,6 @@ def printPandasResultSearch(integrity, category, result):
         print("[]", row["entity"])
         print("  -- []", row["answer"])
 
-    # result
-
 def getSimpleEntity(result):
     retValue = []
     for index, row in result.iterrows():
@@ -65,7 +45,7 @@ def search(dataBase,integrity,categoryResult,entityResult,core_):
 
     entity = getEntityPandas(entityResult)
 
-    searchResultEntity = searchInBase(dataBase,category,entity)
+    searchResultEntity = ner_db.searchInBase(dataBase,category,entity,core)
 
     # printPandasResultSearch(integrity, category, searchResultEntity)
 
