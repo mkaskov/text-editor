@@ -6,19 +6,20 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from nnet import data_utils
-from util import textUtil
+from nnet import data_utils as du
+from util import textUtil as tu
 
 import pandas as pd
 
 def connectToBase(url_database,core):
-    textbase = pd.read_excel(url_database, header=None, names=['category', 'in', 'out'])
-    textbase = textbase.fillna(value='')
+    base = pd.read_excel(url_database, header=None, names=['category', 'in', 'out'])
+    base = base.fillna(value='')
 
-    textbase['in'] = textbase['in'].apply(lambda x: textUtil.clearFromDots(data_utils.tokenizer_tpp(x.encode("utf-8"),core._TTP_WORD_SPLIT)))
-    textbase['category'] = textbase['category'].apply(lambda x: textUtil.clearFromDots(data_utils.tokenizer_tpp(x.encode("utf-8"),core._TTP_WORD_SPLIT)))
+    base['in'] = base['in'].apply(lambda x:  " ".join([x for x in du.tokenizer_tpp(x.encode("utf-8"), core._TTP_WORD_SPLIT) if x not in tu.dotsArrEntity]))
+    # base['category'] = base['category'].apply(lambda x: tu.clearDots(du.tokenizer_tpp(x.encode("utf-8"), core._TTP_WORD_SPLIT)))
+    base['category'] = base['category'].apply(lambda x:  " ".join([x for x in du.tokenizer_tpp(x.encode("utf-8"), core._TTP_WORD_SPLIT) if x not in tu.dotsArrEntity]))
 
-    return textbase
+    return base
 
 def searchInBase(dataBase,category,entity,core):
     finalBase = dataBase
@@ -28,8 +29,15 @@ def searchInBase(dataBase,category,entity,core):
         if len(finalBase) == 0: finalBase = dataBase
 
     for index, row in entity.iterrows():
-        searchValue = textUtil.clearFromDots(data_utils.tokenizer_tpp(row["entity"],core._TTP_WORD_SPLIT))
+        # searchValue = tu.clearDotsEntity(du.tokenizer_tpp(row["entity"], core._TTP_WORD_SPLIT))
+        searchValue = " ".join([x for x in du.tokenizer_tpp(row["entity"], core._TTP_WORD_SPLIT) if x not in tu.dotsArrEntity])
         result = finalBase.loc[finalBase['in'] == searchValue]
         if len(result) > 0: row["answer"] = finalBase.ix[result.iloc[0].name]["out"]
 
     return entity
+
+def searchCategory(dataBase,category,core):
+    # searchValue = tu.clearDots(du.tokenizer_tpp(category, core._TTP_WORD_SPLIT))
+    searchValue =  " ".join([x for x in du.tokenizer_tpp(category, core._TTP_WORD_SPLIT) if x not in tu.dotsArrEntity])
+    result = dataBase.loc[dataBase['category'] == searchValue]
+    return result

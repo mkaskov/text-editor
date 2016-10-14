@@ -161,7 +161,7 @@ class Core(object):
         session.run(tf.initialize_all_variables())
       return model
 
-    def recognition(self,sentence,printStats=False):
+    def recognition(self,sentence,printStats=True):
         _buckets = self._buckets
         in_vocab = self.in_vocab
         rev_out_vocab = self.rev_out_vocab

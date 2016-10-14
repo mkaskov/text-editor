@@ -14,6 +14,8 @@ from cStringIO import StringIO
 afterSpace = ['.', ',',':',')','%']
 beforSpace = ['°','(']
 emptyStr = ['.','','[newline]']
+dotsArr = [".",",","!","?",":",";"]
+dotsArrEntity = [".",",","!","?",":",";","(",")"]
 
 pJoinSent = re.compile(u'\.[А-Я]')
 
@@ -106,12 +108,28 @@ def getWordState(id,outputs,vocab,word):
     elif id + 1 < len(outputs): return 'hasNextWord'
     else: return 'default'
 
-def clearFromDots(tokens):
+def clearDots(tokens):
     retValue = []
 
     if len(tokens) > 0:
-        if not tokens[0] in [".", ",", "!", "?", ":", ";"]: retValue.append(tokens[0])
+        if not tokens[0] in dotsArr: retValue.append(tokens[0])
         for i in xrange(1, len(tokens) - 1): retValue.append(tokens[i])
-        if not tokens[-1] in [".", ",", "!", "?", ":", ";"]: retValue.append(tokens[-1])
+        if not tokens[-1] in dotsArr: retValue.append(tokens[-1])
+
+    return " ".join(retValue)
+
+def clearDotsEntity(tokens):
+    retValue = []
+
+    if len(tokens) > 0:
+        if "(" in tokens and ")" in tokens:
+            if not tokens[0] in dotsArr: retValue.append(tokens[0])
+        else:
+            if not tokens[0] in dotsArrEntity: retValue.append(tokens[0])
+        for i in xrange(1, len(tokens) - 1): retValue.append(tokens[i])
+        if "(" in tokens and ")" in tokens:
+            if not tokens[-1] in dotsArr: retValue.append(tokens[-1])
+        else:
+            if not tokens[-1] in dotsArrEntity: retValue.append(tokens[-1])
 
     return " ".join(retValue)

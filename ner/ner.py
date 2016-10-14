@@ -10,6 +10,8 @@ from cStringIO import StringIO
 from nnet import data_utils
 import re
 
+dotsArr = [".",",","!","?",":",";"]
+
 def getEntitys(sent_tokens, outputs, vocab, startTag, middleTag, endTag, lastCheck=False, prinStats=False,
                ignoreCategory=False):
     orig_val_arr = []
@@ -175,80 +177,72 @@ def clean_tags_entity(entity):
         retValue.append(item[0].strip())
     return retValue
 
-
-# def clean_duplicates_entity(entity):
-#     retValue = []
-#     lastI = -10
-#     for i, sent in enumerate(entity):
-#         if i > 0 and not lastI + 1 == i:
-#             prev = data_utils.tokenizer_tpp(entity[i - 1], core._TTP_WORD_SPLIT)
-#             curr = data_utils.tokenizer_tpp(sent, core._TTP_WORD_SPLIT)
-#             lastI = i
-#             if prev[len(prev) - 1] == curr[0]: prev = prev[0:-1]
-#             retValue.append(" ".join(prev))
-#             retValue.append(" ".join(curr))
+# def check_integrity(orig, cat, ent):
+#     category = ''
+#     if len(cat)>0: category=cat[0][0]
+#     final = category
 #
-#     return retValue
+#     for i in ent: final += i[0]
+#
+#     final = re.sub("[\s\xA0]+", "", final)
+#
+#     orig = re.sub("[\s\xA0]+", "", orig)
+#
+#     # print(orig)
+#     # print(final)
+#
+#     return orig == final
 
+def check_integrity(orig, cat, ent, printStats=False):
+    final = cat + "".join(ent)
+    final = re.sub("[\s]+", "", final)
 
-def check_integrity(orig, cat, ent):
-    category = ''
-    if len(cat)>0: category=cat[0]
-    final = category + " ".join(ent)
-    final = re.sub("[\s\xA0]+", "", final)
-    orig = re.sub("[\s\xA0]+", "", orig)
+    orig = data_utils.tokenizer_tpp(orig, core._TTP_WORD_SPLIT)
+    orig = "".join(orig)
+    orig = re.sub("[\s]+", "", orig)
 
-    print(orig)
-    print(final)
+    if(printStats):
+        print("\n----------------Integrity----------------------------")
+        print(orig)
+        print(final)
+        print ("integrity:",orig == final)
+        print ("type orig:",type(orig))
+        print ("type final:",type(final))
 
     return orig == final
 
-
-# def upgradeSent(sentecesEntity, tokens, window, addWindow=1):
-#     clusters = int(len(tokens) / window) + 1
-#     retValue = []
-#
-#     for iterator in xrange(0, clusters):
-#         sourceSent = sentecesEntity[iterator]
-#
-#         startToken = ''
-#         endToken = ''
-#
-#         if iterator > addWindow - 1:
-#             if not tokens[iterator * window - addWindow].isdigit():
-#                 for z in xrange(0, addWindow): startToken += tokens[iterator * window - (addWindow - z)] + ' '
-#
-#         if (iterator * window + window + addWindow - 1) < len(tokens):
-#             if not tokens[iterator * window + window + addWindow - 1].isdigit():
-#                 for z in xrange(0, addWindow): endToken += tokens[iterator * window + window + z]
-#
-#         print('[', iterator, '] [SOURCE  ]', sourceSent.strip())
-#         tempSent = startToken + ' ' + sourceSent + ' ' + endToken
-#         print('[', iterator, '] [REFACTOR]', tempSent.strip())
-#
-#         retValue.append(tempSent)
-#
-#     return retValue
-
-def tuneDots(entity):
+def clearSingleDots(entity):
     retValue = []
     lastI = -1
     for i,current in enumerate(entity):
         if not i == lastI:
             if i+1<len(entity):
-                next = entity[i+1]
+                next = entity[i+1][0]
+                currentE = current[0]
                 nextTokens = data_utils.tokenizer_tpp(next, core._TTP_WORD_SPLIT)
                 if len(nextTokens)==1:
-                    if nextTokens[0] in [".",",","!","?",":",";"]:
-                        retValue.append(current+next)
+                    if nextTokens[0] in dotsArr:
+                        retValue.append([currentE+" "+next,current[1]+entity[i+1][1]])
                         lastI = i+1
                     else: retValue.append(current)
-                else:
-                    retValue.append(current)
-            else:
-                retValue.append(current)
+                else: retValue.append(current)
+            else: retValue.append(current)
 
     return retValue
+
+def cleanBeginigDots(entity):
+    for i, current in enumerate(entity):
+        if i-1>=0:
+           tokens = data_utils.tokenizer_tpp(current[0], core._TTP_WORD_SPLIT)
+           tokensNer =  current[1]
+
+           if tokens[0] in dotsArr:
+               entity[i-1][0] += " " + tokens[0]
+               entity[i-1][1] += tokensNer[0]
+               entity[i][0] =  " ".join(tokens[1:len(tokens)])
+               entity[i][1] = tokensNer[1:len(tokensNer)]
+
+    return entity
 
 def recognize_entity(sentecesEntity):
     entity = []
@@ -259,7 +253,7 @@ def recognize_entity(sentecesEntity):
         # print("\n------------------------------- Start recogintion -----------------------------------------")
         # print(sent)
 
-        outputs, rev_out_vocab = core.recognition(sent)
+        outputs, rev_out_vocab = core.recognition(sent,printStats=False)
 
         sentTokens = data_utils.tokenizer_tpp(sent, core._TTP_WORD_SPLIT)
 
@@ -300,34 +294,37 @@ def split_text(tokens, clusters, window):
 
     return sentecesEntity
 
-def parse(text,core_):
-    window = 30
-    global core
-    core = core_
-    integrity = False
-
-    tokens = data_utils.tokenizer_tpp(text,core._TTP_WORD_SPLIT)
-
-    clusters = int(len(tokens) / window)
-
-    sentecesEntity = split_text(tokens, clusters, window)
-
-    # sentecesEntity = upgradeSent(sentecesEntity, tokens, window, addWindow=1) #эксперементальный способ увеличения данных для выборки
-
-    entity, category = recognize_entity(sentecesEntity)
-
-    entity = concat_entity(entity, '[At]', '[_At_]', '[/At]')
-    category = concat_entity(category, '[K]', '[_K_]', '[/K]')
-
-    entity = end_to_start_concat_entity(entity, '[At]', '[_At_]', '[/At]')
-
+def clean_tags(category,entity):
     entity = clean_tags_entity(entity)
     category = clean_tags_entity(category)
 
-    # entity = clean_duplicates_entity(entity) #Своевольно режет массив почему то
+    return category,entity
 
-    entity = tuneDots(entity)
+def parse_tags(text,core_):
+    window = 30
+    global core
+    core = core_
 
-    integrity = check_integrity(text, category, entity)
+    tokens = data_utils.tokenizer_tpp(text,core._TTP_WORD_SPLIT)
+    clusters = int(len(tokens) / window)
+    sentecesEntity = split_text(tokens, clusters, window)
+    entity, category = recognize_entity(sentecesEntity)
+    entity = concat_entity(entity, '[At]', '[_At_]', '[/At]')
+    category = concat_entity(category, '[K]', '[_K_]', '[/K]')
+    entity = end_to_start_concat_entity(entity, '[At]', '[_At_]', '[/At]')
 
-    return integrity,category,entity
+    return category,entity
+
+def parse(text,core_,cleanTags=True):
+    global core
+    core = core_
+
+    category, entity = parse_tags(text, core_)
+    entity = clearSingleDots(entity)
+    entity = cleanBeginigDots(entity)
+
+    if cleanTags:
+        entity = clean_tags_entity(entity)
+        category = category[0][0] if len(category) > 0 else ""
+
+    return category,entity
