@@ -20,6 +20,7 @@ from ner import ner, ner_search,ner_db
 import copy
 import re
 from nnet import data_utils
+from util import textUtil as tu
 
 # Obtain the flask app object
 app = Flask(__name__)
@@ -48,7 +49,10 @@ def prepareForSearch(sourceText,cellid):
             category = cat.strip()
             startIndexText = i+1
 
-    if startIndexText>-1 and startIndexText<len(tableRow): text = tableRow[cellid]
+    # if startIndexText>-1 and startIndexText<len(tableRow): text = tableRow[cellid]
+    text = tableRow[cellid]
+
+    [print("[]",x) for x in tableRow]
 
     print("---------------------------------")
     print ("[final category]:",category)
@@ -80,8 +84,32 @@ def checkExistAndSplitParser(orig,entity):
     return orig==finalText
 
 
-def parse_search(text):
+def parse_search(text,secondTry = False):
     category, entity = ner.parse(text,core)
+
+
+    if secondTry:
+        checkCat = re.sub("[\s\xA0]+", "", category.decode('utf-8'))
+        if not ner_search.isCategoryExist(dataBase,category,core) or checkCat in tu.dotsArrEntity:
+            if ner_search.isInputExist(dataBase,category,core):
+                newEntity = []
+                newEntity.append(category)
+                newEntity+=entity
+                entity=newEntity
+            elif checkCat in tu.dotsArrEntity:
+                entity[0] = category + " " + entity[0]
+            else:
+                entity[0] = category + " " + entity[0]
+
+            category = ""
+
+
+    print ("parser------------------------------------")
+    print ("[source text]",text)
+    print ("[category]",category)
+    for x in entity:
+        print ("[entity]",x)
+
     entity = ner_search.search(dataBase,category,entity,core)
     return entity, category
 
@@ -105,6 +133,7 @@ def parse_search_double_parse():
             text =  exist_category + " " + exist_text
             use_exist_category = True
 
+    print ("search 0")
     entity, category = parse_search(text)
 
     print ("[paser category]",category)
@@ -118,10 +147,11 @@ def parse_search_double_parse():
         if not category==exist_category and not checkExistAndSplitParser(exist_text,entity):
                 text = exist_text
                 use_exist_category = False
-                entity, category = parse_search(text)
+                print("search 1")
+                entity, category = parse_search(text,secondTry=True)
 
     print ("[check category]",category)
-    print ("[check entity]")
+    print ("[check entity]",entity)
 
     resolved = checkResolved(entity)
     integrity = ner.check_integrity(text, category, [x["entity"] for x in entity],printStats=False)
@@ -134,6 +164,7 @@ def parse_search_double_parse():
 
         for i, item in enumerate(entity):
             if len(item["answer"]) == 0:
+                print("search 2",i)
                 _entity, _category = parse_search(item["entity"])
 
                 _resolved = checkResolved(_entity)
@@ -162,7 +193,7 @@ def parse_search_double_parse():
     if len(category) > 0:
         finalEntity = []
 
-        if not use_exist_category: finalEntity.append({"entity": category, "answer": category})
+        if not use_exist_category: finalEntity.append({"entity": category, "answer": ""})
 
         finalEntity += entity
         entity = finalEntity

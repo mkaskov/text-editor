@@ -41,3 +41,9 @@ def searchCategory(dataBase,category,core):
     searchValue =  " ".join([x for x in du.tokenizer_tpp(category, core._TTP_WORD_SPLIT) if x not in tu.dotsArrEntity])
     result = dataBase.loc[dataBase['category'] == searchValue]
     return result
+
+def searchInput(dataBase,text,core):
+    # searchValue = tu.clearDots(du.tokenizer_tpp(category, core._TTP_WORD_SPLIT))
+    searchValue =  " ".join([x for x in du.tokenizer_tpp(text, core._TTP_WORD_SPLIT) if x not in tu.dotsArrEntity])
+    result = dataBase.loc[dataBase['in'] == searchValue]
+    return result
