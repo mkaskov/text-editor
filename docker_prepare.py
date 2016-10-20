@@ -5,7 +5,6 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 import sys
-import os
 import re
 
 datasetFolder = sys.argv[1]
@@ -28,8 +27,17 @@ for fileName in filesToWrite:
 
     with open(fileName, "w") as text_file: text_file.write(ret)
 
-with open("app2web_ner.py", "r") as myfile: s = myfile.read()
-ret = re.sub("url_database\s+=\s+[\S]+", "url_database = \"" +datasetFolder +"/dataset/base.xslx\"", s)
+fileName = "app2web_ner.py"
+with open(fileName, "r") as myfile: s = myfile.read()
+ret = re.sub("url_database\s+=\s+[\S]+", "url_database = \"" +datasetFolder +"/database/base.xlsx\"", s)
 print ("[File]",fileName,"-------------------------------------------------------------")
 print (ret)
-with open("app2web_ner.py", "w") as text_file: text_file.write(ret)
+with open(fileName, "w") as text_file: text_file.write(ret)
+
+fileName = "/home/service/data_base/checkpoints/checkpoint"
+with open(fileName, "r") as myfile: s = myfile.read()
+ret = re.sub("model_checkpoint_path:\s+[\S]+checkpoints/", "model_checkpoint_path: \"/home/service/data_base/checkpoints/", s)
+ret = re.sub("all_model_checkpoint_paths:\s+[\S]+checkpoints/", "all_model_checkpoint_paths: \"/home/service/data_base/checkpoints/", ret)
+print ("[File]",fileName,"-------------------------------------------------------------")
+print (ret)
+with open(fileName, "w") as text_file: text_file.write(ret)

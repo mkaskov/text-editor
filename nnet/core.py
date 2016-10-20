@@ -106,7 +106,9 @@ class Core(object):
             print ("Port:",FLAGS.port)
         else: print ("Mode: train mode")
 
-        if useGPU: print ("[GPU MODE]")
+        if useGPU:
+            print ("[GPU MODE]")
+            print("reduce gpu usage: ", reduce_gpu)
         else: print ("[CPU MODE]")
 
         if forward_only: print ("forward only: true")
@@ -143,8 +145,6 @@ class Core(object):
         print("decode mode: ", FLAGS.decode)
 
         print("self_test mode: ", FLAGS.self_test)
-
-        print("reduce gpu usage: ", reduce_gpu)
 
         print ("------------------------------------------------------------------------------------------------")
 

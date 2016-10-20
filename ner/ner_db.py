@@ -12,7 +12,7 @@ from util import textUtil as tu
 import pandas as pd
 
 def connectToBase(url_database,core):
-    base = pd.read_excel(url_database, header=None, names=['category', 'in', 'out'])
+    base = pd.read_excel(url_database, sheetname=0, header=None, names=['category', 'in', 'out'])
     base = base.fillna(value='')
 
     base['in'] = base['in'].apply(lambda x:  " ".join([x for x in du.tokenizer_tpp(x.encode("utf-8"), core._TTP_WORD_SPLIT) if x not in tu.dotsArrEntity]))
