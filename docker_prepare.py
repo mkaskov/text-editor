@@ -17,7 +17,7 @@ for fileName in filesToWrite:
     with open(fileName, "r") as myfile: s = myfile.read()
 
     ret = re.sub("data_dir=[\S]+", "data_dir="+datasetFolder, s)
-    ret = re.sub("python /home/user/Documents/editor/app2web_ner.py", "python app2web_ner.py", ret)
+    ret = re.sub("python /home/user/Documents/editor/app2web_ner.py", "python app2web_ner.py --fixdataset=true", ret)
     ret = re.sub("--port=\d+", "--port="+editorPort, ret)
     if editorMode=="gpu": ret = re.sub("--usegpu=\S+", "--usegpu=true", ret)
     elif editorMode=="cpu": ret = re.sub("--usegpu=\S+", "--usegpu=false", ret)
@@ -29,7 +29,7 @@ for fileName in filesToWrite:
 
 fileName = "app2web_ner.py"
 with open(fileName, "r") as myfile: s = myfile.read()
-ret = re.sub("url_database\s+=\s+[\S]+", "url_database = \"" +datasetFolder +"/database/base.xlsx\" --fixdataset=true", s)
+ret = re.sub("url_database\s+=\s+[\S]+", "url_database = \"" +datasetFolder +"/database/base.xlsx\"", s)
 print ("[File]",fileName,"-------------------------------------------------------------")
 print (ret)
 with open(fileName, "w") as text_file: text_file.write(ret)
