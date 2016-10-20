@@ -125,6 +125,7 @@ def parse_search_simple():
 def parse_search_double_parse():
     text = request.json['query']["text"].encode("utf-8")
     cellid = request.json['query']["cellid"]
+    use_exist_category = False
 
     if(cellid>-1):
         exist_category,exist_text = prepareForSearch(text,cellid)
@@ -231,7 +232,7 @@ def parse_tag():
     return jsonify(entity=entity, category=category)
 
 if __name__ == "__main__":
-    FLAGS, _TTP_WORD_SPLIT, _buckets = initialization.getParams()
-    core = core.Core(FLAGS, _TTP_WORD_SPLIT, _buckets, web=True, reduce_gpu=True, forward_only=True)
+    FLAGS, _TTP_WORD_SPLIT, _buckets,useGPU = initialization.getParams()
+    core = core.Core(FLAGS, _TTP_WORD_SPLIT, _buckets, web=True, reduce_gpu=True, forward_only=True,useGPU=useGPU)
     dataBase = ner_db.connectToBase(url_database,core)
     app.run(host='0.0.0.0', port=FLAGS.port, debug=True, use_reloader=False, threaded=False)

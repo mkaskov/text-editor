@@ -60,7 +60,7 @@ class Core(object):
     # See seq2seq_model.Seq2SeqModel for details of how they work.
     global _buckets
 
-    def __init__(self,FLAGS,_TTP_WORD_SPLIT,_buckets,web=False,reduce_gpu=False,forward_only = False):
+    def __init__(self,FLAGS,_TTP_WORD_SPLIT,_buckets,web=False,reduce_gpu=False,forward_only = False,useGPU = True):
         sys.stdout = Unbuffered(sys.stdout)
         self.FLAGS = FLAGS
         self._buckets = _buckets
@@ -71,13 +71,16 @@ class Core(object):
         self.in_vocab = None
         self.rev_out_vocab = None
 
-        self.printStartParams (FLAGS,_TTP_WORD_SPLIT,_buckets,web,reduce_gpu,forward_only)
+        self.printStartParams (FLAGS,_TTP_WORD_SPLIT,_buckets,web,reduce_gpu,forward_only,useGPU)
 
-        # Выделение видеопамяти на процесс 20%
-        gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.20)
-
-        if reduce_gpu: self.sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
-        else: self.sess = tf.Session()
+        if useGPU:
+            # Выделение видеопамяти на процесс 20%
+            gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.20)
+            if reduce_gpu: self.sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
+            else: self.sess = tf.Session()
+        else:
+            config = tf.ConfigProto(device_count={'GPU': 0})
+            self.sess = tf.Session(config=config)
 
         if web:
             self.in_vocab_path = os.path.join(FLAGS.data_dir, "vocab%d.input" % FLAGS.in_vocab_size)
@@ -90,7 +93,7 @@ class Core(object):
         self.model = self.create_model(self.sess, forward_only)
         if web: self.model.batch_size = 1  # We decode one sentence at a time.
 
-    def printStartParams(self,FLAGS,_TTP_WORD_SPLIT,_buckets,web,reduce_gpu,forward_only):
+    def printStartParams(self,FLAGS,_TTP_WORD_SPLIT,_buckets,web,reduce_gpu,forward_only,useGPU):
         print ("------------------------Initialization---------------------------------------------------------")
         print("[Tensorflow version] :", tf.__version__)
 
@@ -102,6 +105,9 @@ class Core(object):
             print ("Mode: web mode")
             print ("Port:",FLAGS.port)
         else: print ("Mode: train mode")
+
+        if useGPU: print ("[GPU MODE]")
+        else: print ("[CPU MODE]")
 
         if forward_only: print ("forward only: true")
         else: print ("forward only: false")

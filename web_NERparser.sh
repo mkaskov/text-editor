@@ -10,4 +10,4 @@ echo "Starting seq2seq model..."
 export TF_MIN_GPU_MULTIPROCESSOR_COUNT=5
 
 mkdir -p $data_dir/log
-python /home/user/Documents/editor/app2web_ner.py --data_dir $data_dir/ --port=5003 2>&1 | tee -a $data_dir/log/weblog.txt
+python /home/user/Documents/editor/app2web_ner.py --data_dir $data_dir/ --port=5003 --usegpu=true 2>&1 | tee -a $data_dir/log/weblog.txt
