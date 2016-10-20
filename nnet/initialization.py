@@ -74,7 +74,7 @@ def getParams():
         if '--usegpu' in arg:
             useGPU = True if sys.argv[1:][id][9:]=='true' else False
         if '--fixdataset' in arg:
-            useGPU = True if sys.argv[1:][id][9:] == 'true' else False
+            fixDataSet = True if sys.argv[1:][id][13:] == 'true' else False
 
     if data_dir is not None:
         params = getConfig(config_file=data_dir)
