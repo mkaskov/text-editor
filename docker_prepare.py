@@ -29,15 +29,16 @@ for fileName in filesToWrite:
 
 fileName = "app2web_ner.py"
 with open(fileName, "r") as myfile: s = myfile.read()
-ret = re.sub("url_database\s+=\s+[\S]+", "url_database = \"" +datasetFolder +"/database/base.xlsx\"", s)
+ret = re.sub("url_database\s+=\s+[\S]+", "url_database = \"" +datasetFolder +"/database/base.xlsx\" --fixdataset=true", s)
 print ("[File]",fileName,"-------------------------------------------------------------")
 print (ret)
 with open(fileName, "w") as text_file: text_file.write(ret)
 
-fileName = "/home/service/data_base/checkpoints/checkpoint"
-with open(fileName, "r") as myfile: s = myfile.read()
-ret = re.sub("model_checkpoint_path:\s+[\S]+checkpoints/", "model_checkpoint_path: \"/home/service/data_base/checkpoints/", s)
-ret = re.sub("all_model_checkpoint_paths:\s+[\S]+checkpoints/", "all_model_checkpoint_paths: \"/home/service/data_base/checkpoints/", ret)
-print ("[File]",fileName,"-------------------------------------------------------------")
-print (ret)
-with open(fileName, "w") as text_file: text_file.write(ret)
+def fix_dataset():
+    fileName = "/home/service/data_base/checkpoints/checkpoint"
+    with open(fileName, "r") as myfile: s = myfile.read()
+    ret = re.sub("model_checkpoint_path:\s+[\S]+checkpoints/", "model_checkpoint_path: \"/home/service/data_base/checkpoints/", s)
+    ret = re.sub("all_model_checkpoint_paths:\s+[\S]+checkpoints/", "all_model_checkpoint_paths: \"/home/service/data_base/checkpoints/", ret)
+    print ("[File]",fileName,"-------------------------------------------------------------")
+    print (ret)
+    with open(fileName, "w") as text_file: text_file.write(ret)

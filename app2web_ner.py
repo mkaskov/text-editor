@@ -21,6 +21,7 @@ import copy
 import re
 from nnet import data_utils
 from util import textUtil as tu
+import docker_prepare
 
 # Obtain the flask app object
 app = Flask(__name__)
@@ -232,7 +233,8 @@ def parse_tag():
     return jsonify(entity=entity, category=category)
 
 if __name__ == "__main__":
-    FLAGS, _TTP_WORD_SPLIT, _buckets,useGPU = initialization.getParams()
+    FLAGS, _TTP_WORD_SPLIT, _buckets,useGPU,fixDataSet = initialization.getParams()
+    if fixDataSet: docker_prepare.fix_dataset()
     core = core.Core(FLAGS, _TTP_WORD_SPLIT, _buckets, web=True, reduce_gpu=True, forward_only=True,useGPU=useGPU)
     dataBase = ner_db.connectToBase(url_database,core)
     app.run(host='0.0.0.0', port=FLAGS.port, debug=True, use_reloader=False, threaded=False)

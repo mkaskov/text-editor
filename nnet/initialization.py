@@ -68,10 +68,13 @@ def getParams():
     #read data from model.ini, if file exist
     data_dir = None
     useGPU = True
+    fixDataSet = False
     for id, arg in enumerate(sys.argv[1:]):
         if '--data_dir' in arg: data_dir = sys.argv[1:][id + 1]
         if '--usegpu' in arg:
             useGPU = True if sys.argv[1:][id][9:]=='true' else False
+        if '--fixdataset' in arg:
+            useGPU = True if sys.argv[1:][id][9:] == 'true' else False
 
     if data_dir is not None:
         params = getConfig(config_file=data_dir)
@@ -110,4 +113,4 @@ def getParams():
     tf.app.flags.DEFINE_boolean("reduce_gpu", False, "")
     tf.app.flags.DEFINE_boolean("web", False, "")
 
-    return tf.app.flags.FLAGS,_TTP_WORD_SPLIT,_buckets,useGPU
+    return tf.app.flags.FLAGS,_TTP_WORD_SPLIT,_buckets,useGPU,fixDataSet
