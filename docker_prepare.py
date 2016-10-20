@@ -29,7 +29,7 @@ for fileName in filesToWrite:
     with open(fileName, "w") as text_file: text_file.write(ret)
 
 with open("app2web_ner.py", "r") as myfile: s = myfile.read()
-ret = re.sub("url_database\s+=\s+[\S]+", "url_database = " +datasetFolder +"/dataset/base.xslx", s)
+ret = re.sub("url_database\s+=\s+[\S]+", "url_database = \"" +datasetFolder +"/dataset/base.xslx\"", s)
 print ("[File]",fileName,"-------------------------------------------------------------")
 print (ret)
 with open("app2web_ner.py", "w") as text_file: text_file.write(ret)
