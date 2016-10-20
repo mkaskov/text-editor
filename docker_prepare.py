@@ -10,29 +10,34 @@ import re
 datasetFolder = sys.argv[1]
 editorMode = sys.argv[2]
 editorPort = sys.argv[3]
+if len(sys.argv) == 5: prepare = sys.argv[4]
+else: prepare="false"
 
-filesToWrite = ["web_NERparser.sh","train.sh"]
+def base_prepare():
+    filesToWrite = ["web_NERparser.sh","train.sh"]
 
-for fileName in filesToWrite:
+    for fileName in filesToWrite:
+        with open(fileName, "r") as myfile: s = myfile.read()
+
+        ret = re.sub("data_dir=[\S]+", "data_dir="+datasetFolder, s)
+        ret = re.sub("python /home/user/Documents/editor/app2web_ner.py", "python app2web_ner.py --fixdataset=true", ret)
+        ret = re.sub("--port=\d+", "--port="+editorPort, ret)
+        if editorMode=="gpu": ret = re.sub("--usegpu=\S+", "--usegpu=true", ret)
+        elif editorMode=="cpu": ret = re.sub("--usegpu=\S+", "--usegpu=false", ret)
+
+        print ("[File]",fileName,"-------------------------------------------------------------")
+        print (ret)
+
+        with open(fileName, "w") as text_file: text_file.write(ret)
+
+    fileName = "app2web_ner.py"
     with open(fileName, "r") as myfile: s = myfile.read()
-
-    ret = re.sub("data_dir=[\S]+", "data_dir="+datasetFolder, s)
-    ret = re.sub("python /home/user/Documents/editor/app2web_ner.py", "python app2web_ner.py --fixdataset=true", ret)
-    ret = re.sub("--port=\d+", "--port="+editorPort, ret)
-    if editorMode=="gpu": ret = re.sub("--usegpu=\S+", "--usegpu=true", ret)
-    elif editorMode=="cpu": ret = re.sub("--usegpu=\S+", "--usegpu=false", ret)
-
+    ret = re.sub("url_database\s+=\s+[\S]+", "url_database = \"" +datasetFolder +"/database/base.xlsx\"", s)
     print ("[File]",fileName,"-------------------------------------------------------------")
     print (ret)
-
     with open(fileName, "w") as text_file: text_file.write(ret)
 
-fileName = "app2web_ner.py"
-with open(fileName, "r") as myfile: s = myfile.read()
-ret = re.sub("url_database\s+=\s+[\S]+", "url_database = \"" +datasetFolder +"/database/base.xlsx\"", s)
-print ("[File]",fileName,"-------------------------------------------------------------")
-print (ret)
-with open(fileName, "w") as text_file: text_file.write(ret)
+if prepare=="prepare": base_prepare()
 
 def fix_dataset():
     fileName = "/home/service/data_base/checkpoints/checkpoint"
@@ -42,3 +47,4 @@ def fix_dataset():
     print ("[File]",fileName,"-------------------------------------------------------------")
     print (ret)
     with open(fileName, "w") as text_file: text_file.write(ret)
+
