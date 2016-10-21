@@ -8,10 +8,13 @@ from __future__ import division
 from __future__ import print_function
 
 from nnet import initialization, core
+import docker_prepare
+
 
 if __name__ == "__main__":
-  FLAGS,_TTP_WORD_SPLIT,_buckets,useGPU = initialization.getParams()
-  core = core.Core(FLAGS, _TTP_WORD_SPLIT, _buckets, web=False, reduce_gpu=False, forward_only = False,useGPU=useGPU)
+  FLAGS, _TTP_WORD_SPLIT, _buckets, app_options = initialization.getParams()
+  if app_options["fixdataset"]: docker_prepare.fix_dataset()
+  core = core.Core(FLAGS, _TTP_WORD_SPLIT, _buckets, app_options)
   if FLAGS.self_test: core.self_test()
   elif FLAGS.decode: core.decode()
   else: core.train()

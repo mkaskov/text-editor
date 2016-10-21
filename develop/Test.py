@@ -199,51 +199,78 @@ from elasticsearch import Elasticsearch
 #     for doc in res['hits']['hits']:
 #         print("%s) %s" % (doc['_id'], doc['_source']['content']))
 
-"""
-Simple example of querying Elasticsearch creating REST requests
-"""
-import requests
-import json
+# """
+# Simple example of querying Elasticsearch creating REST requests
+# """
+# import requests
+# import json
+#
+#
+# def search(uri, term):
+#     """Simple Elasticsearch Query"""
+#     query = json.dumps({
+#         "query": {
+#             "match": {
+#                 "content": term
+#             }
+#         }
+#     })
+#     response = requests.get(uri, data=query)
+#     results = json.loads(response.text)
+#     return results
+#
+#
+# def format_results(results):
+#     """Print results nicely:
+#     doc_id) content
+#     """
+#     data = [doc for doc in results['hits']['hits']]
+#     for doc in data:
+#         print("%s) %s" % (doc['_id'], doc['_source']['content']))
+#
+#
+# def create_doc(uri, doc_data={}):
+#     """Create new document."""
+#     query = json.dumps(doc_data)
+#     response = requests.post(uri, data=query)
+#     print(response)
+#
+#
+# if __name__ == '__main__':
+#     uri_search = 'http://localhost:9200/test/articles/_search'
+#     uri_create = 'http://localhost:9200/test/articles/'
+#
+#     # create_doc(uri_create, {"content": "The fox 2  rwetw!"})
+#     results = search(uri_search, "fox 2")
+#     format_results(results)
+#
+#
+#     # results = search(uri_search, "fox")
+#     # format_results(results)
+
+app_options = {"usegpu":False,"fixdataset":False}
 
 
-def search(uri, term):
-    """Simple Elasticsearch Query"""
-    query = json.dumps({
-        "query": {
-            "match": {
-                "content": term
-            }
-        }
-    })
-    response = requests.get(uri, data=query)
-    results = json.loads(response.text)
-    return results
+
+print (app_options)
+# for opt in app_options:
+#     print (opt)
+#     print (len(opt))
+#     print (app_options[opt])
 
 
-def format_results(results):
-    """Print results nicely:
-    doc_id) content
-    """
-    data = [doc for doc in results['hits']['hits']]
-    for doc in data:
-        print("%s) %s" % (doc['_id'], doc['_source']['content']))
+for id, arg in enumerate(sys.argv[1:]):
+    # print (id,arg)
+    for opt in app_options:
+        if opt in arg:app_options[opt]=True if arg[len(opt)+3:]=='true' else False
+
+print(app_options)
 
 
-def create_doc(uri, doc_data={}):
-    """Create new document."""
-    query = json.dumps(doc_data)
-    response = requests.post(uri, data=query)
-    print(response)
+app_options["sdfsdf"] = False
 
-
-if __name__ == '__main__':
-    uri_search = 'http://localhost:9200/test/articles/_search'
-    uri_create = 'http://localhost:9200/test/articles/'
-
-    # create_doc(uri_create, {"content": "The fox 2  rwetw!"})
-    results = search(uri_search, "fox 2")
-    format_results(results)
-
-
-    # results = search(uri_search, "fox")
-    # format_results(results)
+    # if '--data_dir' in arg: data_dir = sys.argv[1:][id + 1]
+    # if '--usegpu' in arg:
+    #     useGPU = True if sys.argv[1:][id][9:] == 'true' else False
+    # if '--fixdataset' in arg:
+    #     fixDataSet = True if sys.argv[1:][id][13:] == 'true' else False

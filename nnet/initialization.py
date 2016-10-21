@@ -65,16 +65,22 @@ def getParams():
     _TTP_WORD_SPLIT = re.compile(ur"ГОСТ\s[\d]+\-?[\d]+|[а-яА-Я]+\/[а-яА-Я\d]+\.{1}[а-яА-Я\d]+\.{1}|[а-яА-Я]+\/\([^()]+\)|[^\s\d.,():]+\d?\/[^\s.,():]+|м{1,2}[\d⁰¹²³⁴⁵⁶⁷⁸⁹]|см[\d⁰¹²³⁴⁵⁶⁷⁸⁹]|дм[\d⁰¹²³⁴⁵⁶⁷⁸⁹]|[a-zA-Zа-яА-ЯёЁ]*[^\s\d.!?,:;()\"\'<>%«»±^…\-*=/\xA0]|[\d()!?\'\"<>%,:;±«»^…\-*=/]|\.{3}|\.{1}")
     _buckets = getDefaultBuckets()
 
-    #read data from model.ini, if file exist
+
     data_dir = None
-    useGPU = True
-    fixDataSet = False
+
+    app_options = {
+        "usegpu": False,
+        "fixdataset": False,
+        "web":False,
+        "reduce_gpu":False,
+        "forward_only":False
+    }
+
+    # read data from model.ini, if file exist and app flags
     for id, arg in enumerate(sys.argv[1:]):
         if '--data_dir' in arg: data_dir = sys.argv[1:][id + 1]
-        if '--usegpu' in arg:
-            useGPU = True if sys.argv[1:][id][9:]=='true' else False
-        if '--fixdataset' in arg:
-            fixDataSet = True if sys.argv[1:][id][13:] == 'true' else False
+        for opt in app_options:
+            if opt in arg: app_options[opt] = True if arg[len(opt) + 3:] == 'true' else False
 
     if data_dir is not None:
         params = getConfig(config_file=data_dir)
@@ -110,7 +116,5 @@ def getParams():
     tf.app.flags.DEFINE_integer("port", value_default_port, "default port.")
     tf.app.flags.DEFINE_boolean("decode", False, "Set to True for interactive decoding.")
     tf.app.flags.DEFINE_boolean("self_test", False, "Run a self-test if this is set to True.")
-    tf.app.flags.DEFINE_boolean("reduce_gpu", False, "")
-    tf.app.flags.DEFINE_boolean("web", False, "")
 
-    return tf.app.flags.FLAGS,_TTP_WORD_SPLIT,_buckets,useGPU,fixDataSet
+    return tf.app.flags.FLAGS,_TTP_WORD_SPLIT,_buckets,app_options

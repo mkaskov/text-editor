@@ -60,7 +60,7 @@ class Core(object):
     # See seq2seq_model.Seq2SeqModel for details of how they work.
     global _buckets
 
-    def __init__(self,FLAGS,_TTP_WORD_SPLIT,_buckets,web=False,reduce_gpu=False,forward_only = False,useGPU = True):
+    def __init__(self,FLAGS,_TTP_WORD_SPLIT,_buckets,app_options):
         sys.stdout = Unbuffered(sys.stdout)
         self.FLAGS = FLAGS
         self._buckets = _buckets
@@ -71,18 +71,18 @@ class Core(object):
         self.in_vocab = None
         self.rev_out_vocab = None
 
-        self.printStartParams (FLAGS,_TTP_WORD_SPLIT,_buckets,web,reduce_gpu,forward_only,useGPU)
+        self.printStartParams (FLAGS,_TTP_WORD_SPLIT,_buckets,app_options)
 
-        if useGPU:
+        if app_options["usegpu"]:
             # Выделение видеопамяти на процесс 20%
             gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.20)
-            if reduce_gpu: self.sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
+            if app_options["reduce_gpu"]: self.sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
             else: self.sess = tf.Session()
         else:
             config = tf.ConfigProto(device_count={'GPU': 0})
             self.sess = tf.Session(config=config)
 
-        if web:
+        if app_options["web"]:
             self.in_vocab_path = os.path.join(FLAGS.data_dir, "vocab%d.input" % FLAGS.in_vocab_size)
             self.out_vocab_path = os.path.join(FLAGS.data_dir, "vocab%d.output" % FLAGS.out_vocab_size)
             self.in_vocab, _ = data_utils.initialize_vocabulary(self.in_vocab_path)
@@ -90,10 +90,10 @@ class Core(object):
 
         # Создаем модель и загружаем параметры
         print("Creating %d layers of %d units." % (FLAGS.num_layers, FLAGS.size))
-        self.model = self.create_model(self.sess, forward_only)
-        if web: self.model.batch_size = 1  # We decode one sentence at a time.
+        self.model = self.create_model(self.sess, app_options["forward_only"])
+        if app_options["web"]: self.model.batch_size = 1  # We decode one sentence at a time.
 
-    def printStartParams(self,FLAGS,_TTP_WORD_SPLIT,_buckets,web,reduce_gpu,forward_only,useGPU):
+    def printStartParams(self,FLAGS,_TTP_WORD_SPLIT,_buckets,app_options):
         print ("------------------------Initialization---------------------------------------------------------")
         print("[Tensorflow version] :", tf.__version__)
 
@@ -101,17 +101,17 @@ class Core(object):
         print("Current date and time: ", datetime.datetime.now().strftime("%Y-%m-%d %H:%M"))
         print ("------------------------Start parameters of neural network--------------------------------------")
 
-        if web:
+        if app_options["web"]:
             print ("Mode: web mode")
             print ("Port:",FLAGS.port)
         else: print ("Mode: train mode")
 
-        if useGPU:
+        if app_options["usegpu"]:
             print ("[GPU MODE]")
-            print("reduce gpu usage: ", reduce_gpu)
+            print("reduce gpu usage: ", app_options["reduce_gpu"])
         else: print ("[CPU MODE]")
 
-        if forward_only: print ("forward only: true")
+        if app_options["forward_only"]: print ("forward only: true")
         else: print ("forward only: false")
 
         print ("Buckets: ",_buckets)

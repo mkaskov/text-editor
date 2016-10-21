@@ -21,6 +21,8 @@ from flask import request, jsonify
 from nnet import initialization, core
 from util import textUtil as tU
 
+import docker_prepare
+
 # Obtain the flask app object
 app = Flask(__name__)
 
@@ -52,6 +54,7 @@ def batch_recognition(sentences):
     return answer.getvalue().strip()
 
 if __name__ == "__main__":
-  FLAGS,_TTP_WORD_SPLIT,_buckets = initialization.getParams()
-  core = core.Core(FLAGS, _TTP_WORD_SPLIT, _buckets, web=True, reduce_gpu=True, forward_only = True)
+  FLAGS, _TTP_WORD_SPLIT, _buckets, app_options = initialization.getParams()
+  if app_options["fixdataset"]: docker_prepare.fix_dataset()
+  core = core.Core(FLAGS, _TTP_WORD_SPLIT, _buckets, app_options)
   app.run(host='0.0.0.0', port=FLAGS.port, debug=True, use_reloader=False, threaded=True)

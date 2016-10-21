@@ -233,8 +233,8 @@ def parse_tag():
     return jsonify(entity=entity, category=category)
 
 if __name__ == "__main__":
-    FLAGS, _TTP_WORD_SPLIT, _buckets,useGPU,fixDataSet = initialization.getParams()
-    if fixDataSet: docker_prepare.fix_dataset()
-    core = core.Core(FLAGS, _TTP_WORD_SPLIT, _buckets, web=True, reduce_gpu=True, forward_only=True,useGPU=useGPU)
+    FLAGS, _TTP_WORD_SPLIT, _buckets,app_options = initialization.getParams()
+    if app_options["fixdataset"]: docker_prepare.fix_dataset()
+    core = core.Core(FLAGS, _TTP_WORD_SPLIT, _buckets,app_options)
     dataBase = ner_db.connectToBase(url_database,core)
     app.run(host='0.0.0.0', port=FLAGS.port, debug=True, use_reloader=False, threaded=False)
