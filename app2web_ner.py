@@ -124,7 +124,8 @@ def parse_search_simple():
 
 @app.route('/ner/parse/search', methods=['POST'])
 def parse_search_double_parse():
-    query = request.json['query'].encode("utf-8")
+    query = request.json['query']
+    query=tu.decode_from_java(query)
 
     if query.find('[/cellid]')==-1:  query="[cellid]-1[/cellid]"+query
 
