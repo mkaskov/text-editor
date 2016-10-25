@@ -124,8 +124,13 @@ def parse_search_simple():
 
 @app.route('/ner/parse/search', methods=['POST'])
 def parse_search_double_parse():
-    text = request.json['query']["text"].encode("utf-8")
-    cellid = request.json['query']["cellid"]
+    query = request.json['query'].encode("utf-8")
+
+    if query.find('[/cellid]')==-1:  query="[cellid]-1[/cellid]"+query
+
+    text = query[query.index('[/cellid]') + len("[/cellid]"):]
+    cellid = int(query[len("[cellid]"):query.index('[/cellid]')])
+
     use_exist_category = False
 
     if(cellid>-1):
@@ -200,7 +205,10 @@ def parse_search_double_parse():
         finalEntity += entity
         entity = finalEntity
 
-    return jsonify(_integrity=integrity, _resolved=resolved, entity=entity, category=category)
+    answer = jsonify(_integrity=integrity, _resolved=resolved, entity=entity, category=category)
+
+    if 'readable' in request.json: return answer
+    return jsonify(answer=answer.get_data(as_text=True))
 
 @app.route('/ner/parse/search/tag', methods=['POST'])
 def parse_search_tag():

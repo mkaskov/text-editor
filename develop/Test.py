@@ -248,29 +248,47 @@ from elasticsearch import Elasticsearch
 #     # results = search(uri_search, "fox")
 #     # format_results(results)
 
-app_options = {"usegpu":False,"fixdataset":False}
-
-
-
-print (app_options)
-# for opt in app_options:
-#     print (opt)
-#     print (len(opt))
-#     print (app_options[opt])
-
-
-for id, arg in enumerate(sys.argv[1:]):
-    # print (id,arg)
-    for opt in app_options:
-        if opt in arg:app_options[opt]=True if arg[len(opt)+3:]=='true' else False
-
-print(app_options)
-
-
-app_options["sdfsdf"] = False
+# app_options = {"usegpu":False,"fixdataset":False}
+#
+#
+#
+# print (app_options)
+# # for opt in app_options:
+# #     print (opt)
+# #     print (len(opt))
+# #     print (app_options[opt])
+#
+#
+# for id, arg in enumerate(sys.argv[1:]):
+#     # print (id,arg)
+#     for opt in app_options:
+#         if opt in arg:app_options[opt]=True if arg[len(opt)+3:]=='true' else False
+#
+# print(app_options)
+#
+#
+# app_options["sdfsdf"] = False
 
     # if '--data_dir' in arg: data_dir = sys.argv[1:][id + 1]
     # if '--usegpu' in arg:
     #     useGPU = True if sys.argv[1:][id][9:] == 'true' else False
     # if '--fixdataset' in arg:
     #     fixDataSet = True if sys.argv[1:][id][13:] == 'true' else False
+
+str = "[cellid]2[/cellid]\n[||]Рейки деревянные 8х18 мм\n\n[||]Допускаются трещины длиной до 100% ширины пиломатериала расположенные на торце за исключением вызванными усушкой. Допускается изменение строения древесины в сжатой зоне ствола и сучьев, проявляющееся в виде кажущегося резкого утолщения поздней древесины годичных слоев размером до 66,6 % площади пласти материала. Допускается до 1/2 длины пиломатериала углубление или вздутие, возникающее на поверхности растущего дерева в результате деятельности грибов или бактерий. Допускается на периферию) бурого, красноватого, серого и серо-фиолетового цвета; на продольных разрезах - в виде вытянутых пятен и полос тех же цветов. Допускаются общей площадью до 66,6 % от площади пиломатериала грибница и плодоношения плесневых грибов на поверхности древесины, в виде отдельных пятен или сплошного налета, ненормально окрашенные участки заболони без понижения твердости древесины, возникающие в срубленной древесине под воздействием деревоокрашивающих грибов, не вызывающих образования гнили; которые распространяются вглубь древесины от торцов и боковых поверхностей, на торцах в виде пятен разной величины и формы или сплошного поражения заболони, на боковых поверхностях - в виде вытянутых пятен, полос или сплошного поражения заболони. Не допускается ненормальные по цвету участки древесины с понижением твердости, возникающие под воздействием дереворазрушающих грибов. Качество не клееных лесоматериалах изготовленных из сосны или ели или пихты должно быть до IV сорта. Не параллельность пластей и кромок должна допускаться в пределах отклонений от номинальных размеров.\n\n[||] "
+
+indexLast = str.find('[/cellid]')
+
+print (indexLast)
+
+cellIdIndex = indexLast+len("[/cellid]")
+# print ("----------------------------------------")
+# print (str[cellIdIndex:])
+# print ("----------------------------------------")
+# print (str[:cellIdIndex])
+
+cellText = str[:cellIdIndex]
+
+cellInd = str[len("[cellid]"):str.find('[/cellid]')]
+
+print (int(cellInd))
