@@ -19,7 +19,7 @@ from nnet import initialization, core
 from ner import ner, ner_search,ner_db
 import copy
 import re
-from nnet import data_utils
+from nnet import data_utils as du
 from util import textUtil as tu
 import docker_prepare
 
@@ -42,22 +42,17 @@ def prepareForSearch(sourceText,cellid):
     tableRow = re.split(_WORD_SPLIT, sourceText)
 
     category = ""
-    startIndexText = -1
-    text = ""
 
     for i,cat in enumerate(tableRow):
-        if ner_search.isCategoryExist(dataBase,cat,core):
-            category = cat.strip()
-            startIndexText = i+1
+        if ner_search.isCategoryExist(dataBase,cat,core): category = cat.strip()
 
-    # if startIndexText>-1 and startIndexText<len(tableRow): text = tableRow[cellid]
     text = tableRow[cellid]
 
-    [print("[]",x) for x in tableRow]
-
-    print("---------------------------------")
-    print ("[final category]:",category)
-    print("[final Text]:", text.strip())
+    # [print("[]",x) for x in tableRow]
+    #
+    # print("---------------------------------")
+    # print ("[final category]:",category)
+    # print("[final Text]:", text.strip())
 
     return category,text
 
@@ -65,29 +60,27 @@ def prepareForSearch(sourceText,cellid):
 def checkExistAndSplitParser(orig,entity):
 
     finalText = ""
-    for x in entity:
-        finalText += x["entity"]
+    for x in entity: finalText += x["entity"]
 
-    orig = data_utils.tokenizer_tpp(orig, core._TTP_WORD_SPLIT)
+    orig = du.tokenizer_tpp(orig, core._TTP_WORD_SPLIT)
     orig = "".join(orig)
     orig = re.sub("[\s]+", "", orig)
 
-    finalText = data_utils.tokenizer_tpp(finalText, core._TTP_WORD_SPLIT)
+    finalText = du.tokenizer_tpp(finalText, core._TTP_WORD_SPLIT)
     finalText = "".join(finalText)
     finalText = re.sub("[\s]+", "", finalText)
 
 
-    print ("check orig and parser split")
+    # print ("check orig and parser split")
     # print(orig)
     # print (finalText)
-    print ("equal:",orig==finalText)
+    # print ("equal:",orig==finalText)
 
     return orig==finalText
 
 
 def parse_search(text,secondTry = False):
     category, entity = ner.parse(text,core)
-
 
     if secondTry:
         checkCat = re.sub("[\s\xA0]+", "", category.decode('utf-8'))
@@ -104,15 +97,32 @@ def parse_search(text,secondTry = False):
 
             category = ""
 
-
-    print ("parser------------------------------------")
-    print ("[source text]",text)
-    print ("[category]",category)
-    for x in entity:
-        print ("[entity]",x)
+    # print ("parser------------------------------------")
+    # print ("[source text]",text)
+    # print ("[category]",category)
+    # for x in entity:
+    #     print ("[entity]",x)
 
     entity = ner_search.search(dataBase,category,entity,core)
     return entity, category
+
+def appendPunktMars(entity):
+    for x in entity:
+        answerText =x["answer"] if isinstance(x["answer"], (str)) else x["answer"].encode("utf-8")
+        entityText =x["entity"] if isinstance(x["entity"], (str)) else x["entity"].encode("utf-8")
+
+        tokensEnt = du.tokenizer_tpp(entityText, core._TTP_WORD_SPLIT)
+        tokensAns = du.tokenizer_tpp(answerText, core._TTP_WORD_SPLIT)
+
+        if len(tokensAns)>0 and len(tokensEnt)>0:
+            dotEntEnd = tokensEnt[-1]
+            dotEntStart = tokensEnt[0]
+            dotAnsEnd = tokensAns[-1]
+            dotAnsStart = tokensAns[0]
+            if dotEntEnd in tu.dotsArr and not dotEntEnd==dotAnsEnd: x["answer"]=x["answer"] + dotEntEnd
+            if dotEntStart in tu.dotsArr and not dotEntStart==dotAnsStart: x["answer"] = dotEntStart +" "+ x["answer"]
+
+    return entity
 
 @app.route('/ner/parse/search/simple', methods=['POST'])
 def parse_search_simple():
@@ -141,10 +151,10 @@ def parse_search_double_parse():
             text =  exist_category + " " + exist_text
             use_exist_category = True
 
-    print ("search 0")
+    # print ("search 0")
     entity, category = parse_search(text)
 
-    print ("[paser category]",category)
+    # print ("[paser category]",category)
     # for x in entity:
     #     print ("[e]",x["entity"],"[a]",x["answer"])
 
@@ -155,11 +165,11 @@ def parse_search_double_parse():
         if not category==exist_category and not checkExistAndSplitParser(exist_text,entity):
                 text = exist_text
                 use_exist_category = False
-                print("search 1")
+                # print("search 1")
                 entity, category = parse_search(text,secondTry=True)
 
-    print ("[check category]",category)
-    print ("[check entity]",entity)
+    # print ("[check category]",category)
+    # print ("[check entity]",entity)
 
     resolved = checkResolved(entity)
     integrity = ner.check_integrity(text, category, [x["entity"] for x in entity],printStats=False)
@@ -172,7 +182,7 @@ def parse_search_double_parse():
 
         for i, item in enumerate(entity):
             if len(item["answer"]) == 0:
-                print("search 2",i)
+                # print("search 2",i)
                 _entity, _category = parse_search(item["entity"])
 
                 _resolved = checkResolved(_entity)
@@ -194,7 +204,7 @@ def parse_search_double_parse():
         if newResolve: entity=newEntity
         else: print("\x1b[31m[WARNING] entity not full resolved\x1b[0m")
 
-    print ("\nFinal check for resolved and entity")
+    # print ("\nFinal check for resolved and entity")
     resolved = checkResolved(entity)
     integrity = ner.check_integrity(text, category, [x["entity"] for x in entity], printStats=False)
 
@@ -206,7 +216,11 @@ def parse_search_double_parse():
         finalEntity += entity
         entity = finalEntity
 
+    entity = appendPunktMars(entity)
+
     answer = jsonify(_integrity=integrity, _resolved=resolved, entity=entity, category=category)
+
+    print (answer)
 
     if 'readable' in request.json: return answer
     return jsonify(answer=answer.get_data(as_text=True))

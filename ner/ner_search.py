@@ -33,12 +33,12 @@ def isCategoryExist(dataBase,category,core):
     check = re.sub("[\s\xA0]+", "", category.decode('utf-8'))
     if len(check)==0: return False
     result = ner_db.searchCategory(dataBase,category,core)
-    print(category,len(category), len(result))
+    # print(category,len(category), len(result))
     return len(result) > 0
 
 def isInputExist(dataBase,text,core):
     check = re.sub("[\s\xA0]+", "", text.decode('utf-8'))
     if len(check)==0: return False
     result = ner_db.searchInput(dataBase,text,core)
-    print(text, len(text), len(result))
+    # print(text, len(text), len(result))
     return len(result) > 0
