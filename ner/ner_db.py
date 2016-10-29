@@ -24,6 +24,8 @@ def connectToBase(url_database,core):
 def searchInBase(dataBase,category,entity,core):
     finalBase = dataBase
 
+    category = category.strip()
+
     if len(category) > 0:
         finalBase = dataBase.loc[dataBase['category'] == category]
         if len(finalBase) == 0: finalBase = dataBase
