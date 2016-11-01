@@ -7,13 +7,12 @@ from __future__ import division
 from __future__ import print_function
 
 from nnet import data_utils
-import re
 from util.textUtil import dotsArr
+from util import textUtil as tu
 
 def getEntitys(sent_tokens, outputs, vocab, startTag, middleTag, endTag, lastCheck=False, prinStats=False,
                ignoreCategory=False):
-    orig_val_arr = []
-    for x in outputs: orig_val_arr.append(vocab[x])
+    orig_val_arr = [vocab[x] for x in outputs]
 
     dSize = len(sent_tokens) - len(orig_val_arr)
     if dSize > 0: [orig_val_arr.append('[_At_]') for i in xrange(0, dSize)]
@@ -70,7 +69,7 @@ def getEntitys(sent_tokens, outputs, vocab, startTag, middleTag, endTag, lastChe
 
     finalEntity = []
 
-    for i,item in enumerate(entity):
+    for item in entity:
         thisType = True
         for tag in item[1]:
             if not tag in [startTag, middleTag, endTag]:
@@ -161,12 +160,8 @@ def clean_tags_entity(entity):
     return [x[0].strip() for x in entity]
 
 def check_integrity(orig, cat, ent, printStats=False):
-    final = cat + "".join(ent)
-    final = re.sub("[\s]+", "", final)
-
-    orig = data_utils.tokenizer_tpp(orig, core._TTP_WORD_SPLIT)
-    orig = "".join(orig)
-    orig = re.sub("[\s]+", "", orig)
+    final = tu.getSimpledValue(cat + "".join(ent), core)
+    orig = tu.getSimpledValue(orig, core)
 
     if(printStats):
         print("\n----------------Integrity----------------------------")

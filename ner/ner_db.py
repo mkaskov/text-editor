@@ -13,12 +13,12 @@ import pandas as pd
 def connectToBase(url_database,core):
     base = pd.read_excel(url_database, sheetname=0, header=None, names=['category', 'in', 'out'])
     base = base.fillna(value='')
-    base['in'] = base['in'].apply(lambda x:  tu.getSearchValue(x.encode("utf-8"),core))
-    base['category'] = base['category'].apply(lambda x:  tu.getSearchValue(x.encode("utf-8"),core))
+    base['in'] = base['in'].apply(lambda x:  tu.getSimpledValue(x.encode("utf-8"), core))
+    base['category'] = base['category'].apply(lambda x:  tu.getSimpledValue(x.encode("utf-8"), core))
     return base
 
 def searchBaseInField(type, dataBase, text, core):
-    return dataBase.loc[dataBase[type] == tu.getSearchValue(text, core)]
+    return dataBase.loc[dataBase[type] == tu.getSimpledValue(text, core)]
 
 def search(dataBase, category, entity, core):
     entity = [{"entity":x,"answer":""} for x in entity]
@@ -35,12 +35,12 @@ def search(dataBase, category, entity, core):
     return entity
 
 def isCategoryExist(dataBase,text,core):
-    if len(tu.getSearchValue(text, core))==0: return False
+    if len(tu.getSimpledValue(text, core))==0: return False
     result = searchBaseInField("category",dataBase,text,core)
     return len(result) > 0
 
 def isInputExist(dataBase,text,core):
-    if len(tu.getSearchValue(text, core))==0: return False
+    if len(tu.getSimpledValue(text, core))==0: return False
     result = searchBaseInField("in",dataBase,text,core)
     return len(result) > 0
 

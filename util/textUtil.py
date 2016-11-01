@@ -106,5 +106,5 @@ def getWordState(id,outputs,vocab,word):
     elif id + 1 < len(outputs): return 'hasNextWord'
     else: return 'default'
 
-def getSearchValue(text, core):
+def getSimpledValue(text, core):
     return "".join([x for x in du.tokenizer_tpp(text, core._TTP_WORD_SPLIT) if x not in dotsArrEntity])

@@ -14,7 +14,7 @@ from __future__ import division
 from __future__ import print_function
 
 from flask import Flask, request, jsonify
-from flask_cors import CORS, cross_origin
+from flask_cors import CORS
 from nnet import initialization, core
 from ner import ner,ner_db
 import re
@@ -39,8 +39,7 @@ def checkResolved(entity):
 def splitForSearch(sourceText, cellid):
     _WORD_SPLIT = re.compile("\[\|\|\]")
     sourceText = re.sub("[\s]+", " ", sourceText)
-    sourceText = sourceText.strip()
-    tableRow = re.split(_WORD_SPLIT,sourceText)
+    tableRow = re.split(_WORD_SPLIT,sourceText.strip())
 
     for i,cat in enumerate(tableRow):
         if ner_db.isCategoryExist(dataBase,cat,core): category = cat.strip()
@@ -51,22 +50,6 @@ def splitForSearch(sourceText, cellid):
     text = tableRow[cellid].strip()
 
     return category,text
-
-
-def checkExistAndSplitParser(orig,entity):
-
-    finalText = ""
-    for x in entity: finalText += x["entity"]
-
-    orig = du.tokenizer_tpp(orig, core._TTP_WORD_SPLIT)
-    orig = "".join(orig)
-    orig = re.sub("[\s]+", "", orig)
-
-    finalText = du.tokenizer_tpp(finalText, core._TTP_WORD_SPLIT)
-    finalText = "".join(finalText)
-    finalText = re.sub("[\s]+", "", finalText)
-
-    return orig==finalText
 
 def parse_search(text,exist_category,use_exist_category=False):
     category, entity = ner.parse(text,core)
@@ -174,7 +157,6 @@ def prepareForSearch(text,cellid):
     if (cellid > -1):
         exist_category, exist_text = splitForSearch(text, cellid)
         if len(exist_text) > 0:
-            print("[var 2]")
             text = exist_category + " " + exist_text
             use_exist_category = True
     else:
@@ -196,21 +178,21 @@ def parse_search_double_parse():
     text, cellid = getQyery(request)
     exist_category,exist_text,use_exist_category = prepareForSearch(text,cellid)
 
-    print("-----------------------------------------------")
-    print("[searched category]", exist_category)
-    print("[searched text]", exist_text)
-    print ("[exist_category]",use_exist_category)
+    # print("-----------------------------------------------")
+    # print("[searched category]", exist_category)
+    # print("[searched text]", exist_text)
+    # print ("[exist_category]",use_exist_category)
 
     entity, category = parse_search(exist_text,exist_category,use_exist_category)
 
-    print("-----------------------------------------------")
-    print("[parsed category]", category)
-    print("[parsed text]")
-    for x in entity:
-        print ("--------------------------------")
-        print ("[Answer]",x["answer"])
-        print ("[Entity]",x["entity"])
-    print("[/parsed text]")
+    # print("-----------------------------------------------")
+    # print("[parsed category]", category)
+    # print("[parsed text]")
+    # for x in entity:
+    #     print ("--------------------------------")
+    #     print ("[Answer]",x["answer"])
+    #     print ("[Entity]",x["entity"])
+    # print("[/parsed text]")
 
     resolved = checkResolved(entity)
 
