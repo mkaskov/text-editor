@@ -42,12 +42,8 @@ def basic_tokenizer(sentence): #"""Very basic tokenizer: split the sentence into
     words.extend(re.split(_WORD_SPLIT, space_separated_fragment))
   return [w for w in words if w]
 
-def tokenizer_tpp(t, _word_split):
-  # source = re.sub("[\s\xA0]+", " ", t.decode('utf-8'))
-  # words = re.findall(_word_split, source)
-  # return [w.encode('utf-8') for w in words if w]
-
-  words = re.findall(_word_split, t.decode('utf-8'))
+def tokenizer_tpp(t, _tokens):
+  words = re.findall(_tokens, t.decode('utf-8'))
   return [w.encode('utf-8') for w in words if w]
 
 def create_vocabulary(vocabulary_path, data_path, max_vocabulary_size,

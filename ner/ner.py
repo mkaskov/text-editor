@@ -6,11 +6,9 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from cStringIO import StringIO
 from nnet import data_utils
 import re
-
-dotsArr = [".",",","!","?",":",";"]
+from util.textUtil import dotsArr
 
 def getEntitys(sent_tokens, outputs, vocab, startTag, middleTag, endTag, lastCheck=False, prinStats=False,
                ignoreCategory=False):
@@ -79,19 +77,7 @@ def getEntitys(sent_tokens, outputs, vocab, startTag, middleTag, endTag, lastChe
                 thisType=False
         if thisType: finalEntity.append(item)
 
-    entity = finalEntity
-
-    # if len(entitysID)>0:
-    #     print("------------------------------- Result recogintion %s %s %s -----------------------------------------" % (startTag,middleTag,endTag))
-    #     print(" ".join(sent_tokens))
-    #     print(" ".join(orig_val_arr))
-    #     print(entitysID)
-    #
-    #     [print(i[0],i[1]) for i in entity]
-    #     print ("\n")
-
-    return entity
-
+    return finalEntity
 
 def concat_entity(entity_arr, startTag, middleTag, endTag):
 
@@ -172,26 +158,7 @@ def end_to_start_concat_entity(entity_arr, startTag, middleTag, endTag):
     return retValue
 
 def clean_tags_entity(entity):
-    retValue = []
-    for item in entity:
-        retValue.append(item[0].strip())
-    return retValue
-
-# def check_integrity(orig, cat, ent):
-#     category = ''
-#     if len(cat)>0: category=cat[0][0]
-#     final = category
-#
-#     for i in ent: final += i[0]
-#
-#     final = re.sub("[\s\xA0]+", "", final)
-#
-#     orig = re.sub("[\s\xA0]+", "", orig)
-#
-#     # print(orig)
-#     # print(final)
-#
-#     return orig == final
+    return [x[0].strip() for x in entity]
 
 def check_integrity(orig, cat, ent, printStats=False):
     final = cat + "".join(ent)
@@ -250,17 +217,12 @@ def recognize_entity(sentecesEntity):
     ignoreCategory = True
 
     for i, sent in enumerate(sentecesEntity):
-        # print("\n------------------------------- Start recogintion -----------------------------------------")
-        # print(sent)
-
         outputs, rev_out_vocab = core.recognition(sent,printStats=False)
 
         sentTokens = data_utils.tokenizer_tpp(sent, core._TTP_WORD_SPLIT)
 
         if i == 0:
             category = getEntitys(sentTokens, outputs, rev_out_vocab, '[K]', '[_K_]', '[/K]')
-
-            # if len(category) > 0: ignoreCategory = True
 
             if len(category)>0:
                 sentTokens = sentTokens[len(category[0][1]):len(sentTokens)]
@@ -271,12 +233,6 @@ def recognize_entity(sentecesEntity):
         ignoreCategory = True
 
         entity += currEntity
-
-        # print("\n---Parse---\n")
-        #
-        # print (len(outputs),outputs)
-        #
-        # [print(x[0], "\n", x[1],"\n",len(x[1])) for x in currEntity]
 
     return entity, category
 

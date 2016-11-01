@@ -10,6 +10,7 @@ import urllib
 import re
 from .switch import switch
 from cStringIO import StringIO
+from nnet import data_utils as du
 
 afterSpace = ['.', ',',':',')','%']
 beforSpace = ['°','(']
@@ -71,15 +72,12 @@ def getConvertedWord(id,outputs,vocab):
     if id != 0: prevWord = vocab[outputs[id - 1]]
     if id + 1 < len(outputs): nextWord = vocab[outputs[id + 1]]
 
-    # if id==0: word = word.decode('utf8').capitalize().encode('utf8')
-
     state = getWordState(id,outputs,vocab,word)
 
     # if not (prevWord is None) and not (nextWord is None): print('state: ', state, ' prev_word: ', prevWord,
     #                                                               ' current_word: ', word, ' next_word: ', nextWord)
     # elif not (prevWord is None): print ('state: ',state,' prev_word: ',prevWord,' current_word: ',word)
     # elif not (nextWord is None): print ('state: ',state,' current_word: ',word,' next_word: ',nextWord)
-
 
     for case in switch(state):
         if case('digit'): return word
@@ -108,28 +106,5 @@ def getWordState(id,outputs,vocab,word):
     elif id + 1 < len(outputs): return 'hasNextWord'
     else: return 'default'
 
-def clearDots(tokens):
-    retValue = []
-
-    if len(tokens) > 0:
-        if not tokens[0] in dotsArr: retValue.append(tokens[0])
-        for i in xrange(1, len(tokens) - 1): retValue.append(tokens[i])
-        if not tokens[-1] in dotsArr: retValue.append(tokens[-1])
-
-    return " ".join(retValue)
-
-def clearDotsEntity(tokens):
-    retValue = []
-
-    if len(tokens) > 0:
-        if "(" in tokens and ")" in tokens:
-            if not tokens[0] in dotsArr: retValue.append(tokens[0])
-        else:
-            if not tokens[0] in dotsArrEntity: retValue.append(tokens[0])
-        for i in xrange(1, len(tokens) - 1): retValue.append(tokens[i])
-        if "(" in tokens and ")" in tokens:
-            if not tokens[-1] in dotsArr: retValue.append(tokens[-1])
-        else:
-            if not tokens[-1] in dotsArrEntity: retValue.append(tokens[-1])
-
-    return " ".join(retValue)
+def getSearchValue(text, core):
+    return "".join([x for x in du.tokenizer_tpp(text, core._TTP_WORD_SPLIT) if x not in dotsArrEntity])

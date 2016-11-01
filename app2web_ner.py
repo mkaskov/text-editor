@@ -16,8 +16,7 @@ from __future__ import print_function
 from flask import Flask, request, jsonify
 from flask_cors import CORS, cross_origin
 from nnet import initialization, core
-from ner import ner, ner_search,ner_db
-import copy
+from ner import ner,ner_db
 import re
 from nnet import data_utils as du
 from util import textUtil as tu
@@ -44,10 +43,10 @@ def splitForSearch(sourceText, cellid):
     tableRow = re.split(_WORD_SPLIT,sourceText)
 
     for i,cat in enumerate(tableRow):
-        if ner_search.isCategoryExist(dataBase,cat,core): category = cat.strip()
+        if ner_db.isCategoryExist(dataBase,cat,core): category = cat.strip()
 
     if len(category)==0:
-        if ner_search.isCategoryExist(dataBase, tableRow[0], core): category = tableRow[0].strip()
+        if ner_db.isCategoryExist(dataBase, tableRow[0], core): category = tableRow[0].strip()
 
     text = tableRow[cellid].strip()
 
@@ -69,8 +68,7 @@ def checkExistAndSplitParser(orig,entity):
 
     return orig==finalText
 
-
-def parse_search(text,exist_category,use_exist_category=False,secondTry = False):
+def parse_search(text,exist_category,use_exist_category=False):
     category, entity = ner.parse(text,core)
 
     print ("-----------------------------------------------")
@@ -82,7 +80,7 @@ def parse_search(text,exist_category,use_exist_category=False,secondTry = False)
     origCategory = category
 
     if use_exist_category:
-        if ner_search.isInputExist(dataBase, category, core) and not ner_search.isCategoryExist(dataBase, category, core):
+        if ner_db.isInputExist(dataBase, category, core) and not ner_db.isCategoryExist(dataBase, category, core):
             entity = [category] + entity
             print ("[p var 1]")
 
@@ -90,20 +88,19 @@ def parse_search(text,exist_category,use_exist_category=False,secondTry = False)
         # elif not ner_search.isInputExist(dataBase, category, core) and not ner_search.isCategoryExist(dataBase, category, core) and len(category)>0:
             print("[p var 2]")
 
-            newEntityV2 = [category+" "+entity[0]] + entity[1:]
-            newEntityV1 = [category] + entity
-
             def isCatInText(text,category):
                 checkCat = [x for x in du.tokenizer_tpp(category, core._TTP_WORD_SPLIT)]
                 pos = text.find(checkCat[len(checkCat) - 1])
                 return pos>-1,pos,len(checkCat[len(checkCat) - 1])
 
+            newEntityV1 = [category] + entity
             posExist,pos,lastLen = isCatInText(newEntityV1[0],exist_category)
             if posExist:
                 print ("sub v2 1")
                 entity = [newEntityV1[0][pos+lastLen:]]+newEntityV1[1:]
             else:
                 print("sub v2 2")
+                newEntityV2 = [category + " " + entity[0]] + entity[1:]
                 posExist, pos,lastLen = isCatInText(newEntityV2[0], exist_category)
                 print (posExist, pos,lastLen)
                 if posExist:
@@ -112,7 +109,8 @@ def parse_search(text,exist_category,use_exist_category=False,secondTry = False)
         # else:
         #     print("[p var 3]")
 
-        if len(entity[0].strip()) == 0: entity = entity[1:]
+        if len(entity[0].strip()) == 0:
+            entity = entity[1:]
         category = exist_category
 
         checkCat = du.tokenizer_tpp(origCategory, core._TTP_WORD_SPLIT)
@@ -137,41 +135,7 @@ def parse_search(text,exist_category,use_exist_category=False,secondTry = False)
     [print(x) for x in entity]
     print("[/ner exist entity]")
 
-    # checkCat = [x for x in du.tokenizer_tpp(category, core._TTP_WORD_SPLIT)]
-    # checkEntZero = [x for x in du.tokenizer_tpp(entity[0], core._TTP_WORD_SPLIT)]
-    # if "".join(checkCat) in "".join(checkEntZero):
-    #     print (checkCat)
-    #     print (type(entity[0]))
-    #     pos = entity[0].index(checkCat[len(checkCat)-1])+len(checkCat[len(checkCat)-1])
-    #     print ("[MEOOOOOWOOOO]",pos,checkCat[len(checkCat)-1],"[new ent 0]",entity[0][pos:])
-    #     entity[0] = entity[0][pos:].strip()
-    #     if len(entity[0])==0:
-    #         entity = entity[1:]
-    #
-    # print("-------------after check----------------------------------")
-    # print("[ner check category]", category)
-    # print("[ner check entity]")
-    # [print(x) for x in entity]
-    # print("[/ner check entity]")
-
-
-
-    if secondTry:
-        checkCat = re.sub("[\s\xA0]+", "", category.decode('utf-8'))
-        if not ner_search.isCategoryExist(dataBase,category,core) or checkCat in tu.dotsArrEntity:
-            if ner_search.isInputExist(dataBase,category,core):
-                newEntity = []
-                newEntity.append(category)
-                newEntity+=entity
-                entity=newEntity
-            elif checkCat in tu.dotsArrEntity:
-                entity[0] = category + " " + entity[0]
-            else:
-                entity[0] = category + " " + entity[0]
-
-            category = ""
-
-    entity = ner_search.search(dataBase,category,entity,core)
+    entity = ner_db.search(dataBase, category, entity, core)
     return entity, category
 
 def appendPunktMars(entity):
@@ -362,7 +326,7 @@ def parse_search_tag():
     category, entity = ner.clean_tags(_category, _entity)
     category = category[0] if len(category) > 0 else ""
     integrity = ner.check_integrity(text, category, entity, printStats=True)
-    entity = ner_search.search(dataBase,category,entity,core)
+    entity = ner_db.search(dataBase, category, entity, core)
     resolved = checkResolved(entity)
 
     finalEntity = []
