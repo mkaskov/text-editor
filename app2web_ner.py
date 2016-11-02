@@ -282,7 +282,7 @@ def parse_search_double_parse():
         integrity = ner.check_integrity(exist_text, category, [x["entity"] for x in entity])
     else: integrity = ner.check_integrity(exist_category+exist_text, category, [x["entity"] for x in entity])
 
-    entity = appendPunktMars(entity)
+    # entity = appendPunktMars(entity)
     answer = jsonify(_integrity=integrity, _resolved=resolved, entity=entity, category=category)
 
     if 'readable' in request.json: return answer

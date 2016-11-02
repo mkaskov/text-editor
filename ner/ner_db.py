@@ -30,8 +30,7 @@ def search(dataBase, category, entity, core):
 
     for row in entity:
         result = searchBaseInField('in',finalBase,row["entity"],core)
-        if len(result) > 0: row["answer"] = finalBase.ix[result.iloc[0].name]["out"].encode("utf-8")
-
+        if len(result) > 0: row["answer"] = [item["out"] for i,item in result.iterrows()]
     return entity
 
 def isInputExist(type, db, text, core):
