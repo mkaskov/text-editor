@@ -15,8 +15,8 @@ from nnet import data_utils as du
 afterSpace = ['.', ',',':',')','%']
 beforSpace = ['°','(']
 emptyStr = ['.','','[newline]']
-dotsArr = [".",",","!","?",":",";"]
-dotsArrEntity = [".",",","!","?",":",";","(",")","°","/","\\","-","-","°"]
+dotsArr = [".",",","!","?",":",";","мм","и"]
+dotsArrEntity = [".",",","!","?",":",";","(",")","°","/","\\","-","-","°","и"]
 
 pJoinSent = re.compile(u'\.[А-Я]')
 
@@ -43,10 +43,7 @@ def sent_splitter(source):
   return [s.encode('utf-8') for s in sentences if s.strip() not in emptyStr]
 
 def replace_celsius(t):
-    t = t.encode('utf8')
-    t = t.replace(' 0С', ' °С')
-    t = t.decode('utf-8')
-    return t
+    return t.replace(' 0С', ' °С')
 
 def prepare_encode(t):
     return t.replace('\n', '\n[newline]').replace('...', '[threedot]').replace('. ', '[dot]. ')
@@ -106,5 +103,5 @@ def getWordState(id,outputs,vocab,word):
     elif id + 1 < len(outputs): return 'hasNextWord'
     else: return 'default'
 
-def getSimpledValue(text, core):
+def getRaw(text, core):
     return "".join([x for x in du.tokenizer_tpp(text, core._TTP_WORD_SPLIT) if x not in dotsArrEntity])

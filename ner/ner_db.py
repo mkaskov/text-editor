@@ -13,12 +13,12 @@ import pandas as pd
 def connectToBase(url_database,core):
     base = pd.read_excel(url_database, sheetname=0, header=None, names=['category', 'in', 'out'])
     base = base.fillna(value='')
-    base['in'] = base['in'].apply(lambda x:  tu.getSimpledValue(x.encode("utf-8"), core))
-    base['category'] = base['category'].apply(lambda x:  tu.getSimpledValue(x.encode("utf-8"), core))
+    base['in'] = base['in'].apply(lambda x:  tu.getRaw(x.encode("utf-8"), core))
+    base['category'] = base['category'].apply(lambda x:  tu.getRaw(x.encode("utf-8"), core))
     return base
 
-def searchBaseInField(type, dataBase, text, core):
-    return dataBase.loc[dataBase[type] == tu.getSimpledValue(text, core)]
+def searchBaseInField(type, db, text, core):
+    return db.loc[db[type] == tu.getRaw(text, core)]
 
 def search(dataBase, category, entity, core):
     entity = [{"entity":x,"answer":""} for x in entity]
@@ -30,17 +30,12 @@ def search(dataBase, category, entity, core):
 
     for row in entity:
         result = searchBaseInField('in',finalBase,row["entity"],core)
-        if len(result) > 0: row["answer"] = finalBase.ix[result.iloc[0].name]["out"]
+        if len(result) > 0: row["answer"] = finalBase.ix[result.iloc[0].name]["out"].encode("utf-8")
 
     return entity
 
-def isCategoryExist(dataBase,text,core):
-    if len(tu.getSimpledValue(text, core))==0: return False
-    result = searchBaseInField("category",dataBase,text,core)
-    return len(result) > 0
-
-def isInputExist(dataBase,text,core):
-    if len(tu.getSimpledValue(text, core))==0: return False
-    result = searchBaseInField("in",dataBase,text,core)
+def isInputExist(type, db, text, core):
+    if len(tu.getRaw(text, core))==0: return False
+    result = searchBaseInField(type, db, text, core)
     return len(result) > 0
 
