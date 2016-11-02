@@ -29,8 +29,6 @@ CORS(app)
 global core
 global dataBase
 
-url_database = '/home/user/datasets/construction_text_base/БД_3столбца281016.xlsx'
-
 def checkResolved(entity):
     for item in entity:
         if len(item['answer'])==0: return False
@@ -324,5 +322,5 @@ if __name__ == "__main__":
     FLAGS, _TTP_WORD_SPLIT, _buckets,app_options = initialization.getParams()
     if app_options["fixdataset"]: docker_prepare.fix_dataset()
     core = core.Core(FLAGS, _TTP_WORD_SPLIT, _buckets,app_options)
-    dataBase = ner_db.connectToBase(url_database,core)
+    dataBase = ner_db.connectToBase(app_options["url_database"],core)
     app.run(host='0.0.0.0', port=FLAGS.port, debug=True, use_reloader=False, threaded=False)

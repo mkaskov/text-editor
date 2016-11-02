@@ -81,6 +81,7 @@ def getParams():
         if '--data_dir' in arg: data_dir = sys.argv[1:][id + 1]
         for opt in app_options:
             if opt in arg: app_options[opt] = True if arg[len(opt) + 3:] == 'true' else False
+        if '--url_database' in arg: app_options["url_database"] = sys.argv[1:][id + 1]
 
     if data_dir is not None:
         params = getConfig(config_file=data_dir)

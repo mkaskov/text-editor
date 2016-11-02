@@ -138,6 +138,8 @@ class Core(object):
 
         print("train_dir: ", FLAGS.train_dir)
 
+        print("url_database: ",app_options["url_database"])
+
         print("max_train_data_size: ", FLAGS.max_train_data_size)
 
         print("steps_per_checkpoint: ", FLAGS.steps_per_checkpoint)
