@@ -61,7 +61,10 @@ def parse_search(text,exist_category,use_exist_category=False):
 
     categoryRaw ="".join([x for x in du.tokenizer_tpp(category, core._TTP_WORD_SPLIT)])
     existRaw = "".join([x for x in du.tokenizer_tpp(exist_category, core._TTP_WORD_SPLIT)])
-    entity0Raw = "".join([x for x in du.tokenizer_tpp(entity[0], core._TTP_WORD_SPLIT)])
+    if len(entity) > 0:
+        entity0Raw = "".join([x for x in du.tokenizer_tpp(entity[0], core._TTP_WORD_SPLIT)])
+    else:
+        entity0Raw = ""
 
     categorySpace = " ".join([x for x in du.tokenizer_tpp(category, core._TTP_WORD_SPLIT)])
     existCategorySpace = " ".join([x for x in du.tokenizer_tpp(exist_category, core._TTP_WORD_SPLIT)])
@@ -70,28 +73,35 @@ def parse_search(text,exist_category,use_exist_category=False):
         if categoryRaw==existRaw:
            print("var 1")
         elif entity0Raw==existRaw:
-           entity = entity[1:]
+           if len(entity) > 1:
+             entity = entity[1:]
            print ("var 2")
         elif existRaw in categoryRaw:
             entity = [category]+entity
-            entity[0] = entity[0].strip()[len(existCategorySpace):].strip()
+            if len(entity) > 0:
+                entity[0] = entity[0].strip()[len(existCategorySpace):].strip()
             print ("var 3")
         elif existRaw in (categoryRaw+entity0Raw):
             print("var 4")
-            entity[0] = categorySpace +" " + entity[0].strip()
-            entity[0] = entity[0].strip()[len(existCategorySpace):].strip()
+            if len(entity) > 0:
+                entity[0] = categorySpace +" " + entity[0].strip()
+                entity[0] = entity[0].strip()[len(existCategorySpace):].strip()
         else:
-            entity[0] = category + " " + entity[0]
+            if len(entity) > 0: entity[0] = category + " " + entity[0]
             print ("var 5")
 
         category = exist_category
+
     else:
         print ("var 6")
+        if len(entity) > 0:
+            entity[0] = category + " " + entity[0]
+            category = exist_category
 
 
-
-    if len(entity[0].strip()) == 0:
-        entity = entity[1:]
+    if len(entity) > 1:
+        if len(entity[0].strip()) == 0:
+            entity = entity[1:]
 
     print("-------------after use exist----------------------------------")
     print("[ner exist category]", category)

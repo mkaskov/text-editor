@@ -293,8 +293,21 @@ from elasticsearch import Elasticsearch
 #
 # print (int(cellInd))
 
-str = "Дверь  однопольная, размером не менее 900х не более 2100 мм"
+# str = "Дверь  однопольная, размером не менее 900х не более 2100 мм"
+#
+# pos = str.find("металлическая")
+#
+# print (pos)
 
-pos = str.find("металлическая")
+# from PIL import Image
+# img = Image.open("/home/user/Pictures/apple.jpg")
+# img2 = img.rotate(90,expand=True)
+# img2.save("/home/user/Pictures/apple90.jpg")
 
-print (pos)
+total = 100
+current = 0
+for i in range(total):
+    current +=1
+    print (current,current%total)
+    # if i%total == 0: print (i)
+
