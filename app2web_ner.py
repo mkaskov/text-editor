@@ -53,6 +53,11 @@ def splitForSearch(sourceText, cellid):
 def parse_search(text,exist_category,use_exist_category=False):
     category, entity = ner.parse(text,core)
 
+    if not use_exist_category:
+        if ner_db.isInputExist("category", dataBase, entity[0], core):
+            use_exist_category = True
+            exist_category = entity[0].strip()
+
     print ("-----------------------------------------------")
     print("[ner category]", category)
     print("[ner entity]")

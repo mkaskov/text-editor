@@ -308,6 +308,15 @@ total = 100
 current = 0
 for i in range(total):
     current +=1
-    print (current,current%total)
+    # print (current,current%total)
     # if i%total == 0: print (i)
 
+with open("version.txt", "r") as myfile:
+    s = myfile.read()
+    version = re.findall('version:\s+\d+', s)[0]
+    version = int(re.findall('\d+', s)[0])
+    version +=1
+    ret = re.sub("version:[\s\S]+", "version: " + str(version), s)
+
+    with open("version.txt", "w") as text_file:
+        text_file.write(ret)

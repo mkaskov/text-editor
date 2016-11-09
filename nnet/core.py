@@ -70,6 +70,7 @@ class Core(object):
         self.out_vocab_path = None
         self.in_vocab = None
         self.rev_out_vocab = None
+        self.app_options = app_options
 
         self.printStartParams (FLAGS,_TTP_WORD_SPLIT,_buckets,app_options)
 
@@ -165,6 +166,9 @@ class Core(object):
         print("Reading model parameters from %s" % ckpt.model_checkpoint_path)
         model.saver.restore(session, ckpt.model_checkpoint_path)
       else:
+        if self.app_options["web"]:
+            print("\033[91m{}\033[00m".format("[WARNING] not found trained model"))
+            exit(1)
         print("Created model with fresh parameters.")
         session.run(tf.initialize_all_variables())
       return model
