@@ -20,6 +20,15 @@ dotsArrEntity = [".",",","!","?",":",";","(",")","°","/","\\","-","-","°","и"
 
 pJoinSent = re.compile(u'\.[А-Я]')
 
+excludeSamples = [
+    "или аналог",
+    "или эквивалент"
+]
+
+ecludeRegexSamples = [
+    "тип"
+]
+
 def JoinSent(str):
     for match in pJoinSent.finditer(str):
         return str[:match.span()[1]].replace(match.group(),'. '+match.group()[1])+str[match.span()[1]:]
@@ -105,3 +114,14 @@ def getWordState(id,outputs,vocab,word):
 
 def getRaw(text, core):
     return "".join([x for x in du.tokenizer_tpp(text, core._TTP_WORD_SPLIT) if x not in dotsArrEntity])
+
+def getSplitted(text,core):
+    return " ".join([x for x in du.tokenizer_tpp(text, core._TTP_WORD_SPLIT)])
+
+def removeSamples(text,core):
+    for sample in excludeSamples:
+        sample = getSplitted(sample,core)
+        text = re.sub(sample, " ", text)
+    for sample in ecludeRegexSamples:
+        text = re.sub(sample+"\s(\d\s)+\d+|"+sample+"\s(\d\s)+|"+sample+"\s(\d)+", " ", text)
+    return re.sub("[\s]+", " ", text)

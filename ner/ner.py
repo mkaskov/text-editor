@@ -8,6 +8,7 @@ from __future__ import print_function
 
 from nnet import data_utils as du
 from util.textUtil import dotsArr
+from util import textUtil as tu
 
 def getEntitys(sent_tokens, outputs, vocab, startTag, middleTag, endTag, lastCheck=False, prinStats=False,
                ignoreCategory=False):
@@ -160,7 +161,7 @@ def clean_tags_entity(entity):
 
 def check_integrity(orig, cat, ent):
     final = "".join(du.tokenizer_tpp(cat + "".join(ent),core._TTP_WORD_SPLIT))
-    orig = "".join(du.tokenizer_tpp(orig,core._TTP_WORD_SPLIT))
+    orig = "".join(du.tokenizer_tpp(tu.removeSamples(orig, core),core._TTP_WORD_SPLIT))
 
     if not orig == final:
         print("\n----------------Integrity False----------------------------")

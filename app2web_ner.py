@@ -41,10 +41,10 @@ def splitForSearch(sourceText, cellid):
     tableRow = re.split(_WORD_SPLIT,sourceText.strip())
 
     for i,cat in enumerate(tableRow):
-        if ner_db.isInputExist("category",dataBase,cat,core): category = cat.strip()
+        if ner_db.isInputExist("category",dataBase,cat,core): category = tu.removeSamples(cat,core).strip()
 
     if len(category)==0:
-        if ner_db.isInputExist("category",dataBase, tableRow[0], core): category = tableRow[0].strip()
+        if ner_db.isInputExist("category",dataBase, tableRow[0], core): category = tu.removeSamples(tableRow[0],core).strip()
 
     text = tableRow[cellid].strip()
 
@@ -54,9 +54,23 @@ def parse_search(text,exist_category,use_exist_category=False):
     category, entity = ner.parse(text,core)
 
     if not use_exist_category:
-        if ner_db.isInputExist("category", dataBase, entity[0], core):
+        if len(category)>0:
+            print("-----------1")
+            if ner_db.isInputExist("category", dataBase, category, core):
+                use_exist_category = True
+                category  = tu.removeSamples(category, core).strip()
+                exist_category = category
+                print ("-----------2")
+
+        elif ner_db.isInputExist("category", dataBase, entity[0], core):
             use_exist_category = True
-            exist_category = entity[0].strip()
+            category = tu.removeSamples(entity[0],core).strip()
+            exist_category = category
+            if len(entity)>0:
+                entity = entity[1:]
+            else:
+                entity = []
+            print("-----------3")
 
     print ("-----------------------------------------------")
     print("[ner category]", category)

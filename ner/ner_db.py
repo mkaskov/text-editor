@@ -17,24 +17,30 @@ def connectToBase(url_database,core):
     base['category'] = base['category'].apply(lambda x:  tu.getRaw(x.encode("utf-8"), core))
     return base
 
-def searchBaseInField(type, db, text, core):
-    return db.loc[db[type] == tu.getRaw(text, core)]
+def searchBaseInField(type, db, text): return db.loc[db[type] == text]
 
 def search(dataBase, category, entity, core):
     entity = [{"entity":x,"answer":""} for x in entity]
 
+    category = tu.removeSamples(category, core).strip()
+    category = tu.getRaw(category, core)
+
     if len(category.strip()) > 0:
-        finalBase = searchBaseInField('category',dataBase,category,core)
+        finalBase = searchBaseInField('category',dataBase,category)
         if len(finalBase) == 0: return entity
     else: return entity
 
     for row in entity:
-        result = searchBaseInField('in',finalBase,row["entity"],core)
+        result = searchBaseInField('in',finalBase,tu.getRaw(row["entity"], core))
         if len(result) > 0: row["answer"] = [item["out"] for i,item in result.iterrows()]
     return entity
 
 def isInputExist(type, db, text, core):
-    if len(tu.getRaw(text, core))==0: return False
-    result = searchBaseInField(type, db, text, core)
+    if type == "category":
+        text = tu.removeSamples(text, core).strip()
+    text = tu.getRaw(text, core)
+
+    if len(text)==0: return False
+    result = searchBaseInField(type, db, text)
     return len(result) > 0
 
