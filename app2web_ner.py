@@ -39,6 +39,9 @@ def splitForSearch(sourceText, cellid):
     sourceText = re.sub("[\s]+", " ", sourceText)
     sourceText = tu.replace_celsius(sourceText)
     tableRow = re.split(_WORD_SPLIT,sourceText.strip())
+    category = ""
+
+    [print("[splitted]",x.decode("utf-8").strip(),len(x.decode("utf-8").strip())) for x in tableRow]
 
     for i,cat in enumerate(tableRow):
         if ner_db.isInputExist("category",dataBase,cat,core): category = tu.removeSamples(cat,core).strip()
@@ -89,27 +92,48 @@ def parse_search(text,exist_category,use_exist_category=False):
     existCategorySpace = " ".join([x for x in du.tokenizer_tpp(exist_category, core._TTP_WORD_SPLIT)])
 
     if use_exist_category:
-        if categoryRaw==existRaw:
-           print("var 1")
+        if categoryRaw==existRaw and len(existRaw)>0:
+           print("var 0")
         elif entity0Raw==existRaw:
-           if len(entity) > 1:
+           if len(entity) > 0:
              entity = entity[1:]
-           print ("var 2")
-        elif existRaw in categoryRaw:
+             category = exist_category
+           print ("var 1")
+        elif existRaw in categoryRaw and len(existRaw)>0:
             entity = [category]+entity
             if len(entity) > 0:
                 entity[0] = entity[0].strip()[len(existCategorySpace):].strip()
-            print ("var 3")
-        elif existRaw in (categoryRaw+entity0Raw):
-            print("var 4")
+                category = exist_category
+            print ("var 2")
+        elif existRaw in (categoryRaw+entity0Raw) and len(categoryRaw)>0:
+            print("var 3")
             if len(entity) > 0:
                 entity[0] = categorySpace +" " + entity[0].strip()
                 entity[0] = entity[0].strip()[len(existCategorySpace):].strip()
+                category = exist_category
+        elif len(categoryRaw)==0:
+            if ( tu.removeSamples(exist_category, core).strip())==( tu.removeSamples( entity[0], core).strip()):
+                category = entity[0]
+                if len(entity)>0:
+                    entity = entity[1:]
+                else:
+                    entity = []
+            else:
+                if existRaw in entity0Raw:
+                    if len(entity) > 0:
+                        entity[0] = categorySpace + " " + entity[0].strip()
+                        entity[0] = entity[0].strip()[len(existCategorySpace):].strip()
+                        category = exist_category
+                else:
+                    category = exist_category
+            print ("var 4")
         else:
-            if len(entity) > 0: entity[0] = category + " " + entity[0]
+            if len(entity) > 0:
+                entity[0] = category + " " + entity[0]
+                category = exist_category
             print ("var 5")
 
-        category = exist_category
+
 
     else:
         print ("var 6")
@@ -118,7 +142,7 @@ def parse_search(text,exist_category,use_exist_category=False):
             category = exist_category
 
 
-    if len(entity) > 1:
+    if len(entity) > 0:
         if len(entity[0].strip()) == 0:
             entity = entity[1:]
 
@@ -171,10 +195,11 @@ def prepareForSearch(text,cellid):
         exist_category, exist_text = splitForSearch(text, cellid)
         if len(exist_text) > 0:
             text = exist_category + " " + exist_text
-            use_exist_category = True
+            if(len(exist_category)>0):
+                use_exist_category = True
     else:
         text = re.sub("\[\|\|\]", " ", text)
-
+    print ("[user exist category]",use_exist_category,exist_category)
     return exist_category,text,use_exist_category
 
 @app.route('/ner/parse/search/simple', methods=['POST'])
@@ -191,6 +216,9 @@ def parse_search_double_parse():
     text, cellid = getQuery(request)
     exist_category,exist_text,use_exist_category = prepareForSearch(text,cellid)
     entity, category = parse_search(exist_text,exist_category,use_exist_category)
+
+    finalAppend = False
+    if len(exist_category)==0 and len(category)>0: finalAppend = True
     resolved = checkResolved(entity)
 
     if use_exist_category:
@@ -317,6 +345,9 @@ def parse_search_double_parse():
         integrity = ner.check_integrity(exist_text, category, [x["entity"] for x in entity])
     else: integrity = ner.check_integrity(exist_category+exist_text, category, [x["entity"] for x in entity])
 
+    if finalAppend:
+        appendEntity = {"entity":category,"answer":[category]}
+        entity = [appendEntity] +  entity
     entity = appendPunktMars(entity)
     answer = jsonify(_integrity=integrity, _resolved=resolved, entity=entity, category=category)
 

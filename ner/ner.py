@@ -160,7 +160,7 @@ def clean_tags_entity(entity):
     return [x[0].strip() for x in entity]
 
 def check_integrity(orig, cat, ent):
-    final = "".join(du.tokenizer_tpp(cat + "".join(ent),core._TTP_WORD_SPLIT))
+    final = "".join(du.tokenizer_tpp(tu.removeSamples(cat + "".join(ent), core),core._TTP_WORD_SPLIT))
     orig = "".join(du.tokenizer_tpp(tu.removeSamples(orig, core),core._TTP_WORD_SPLIT))
 
     if not orig == final:
