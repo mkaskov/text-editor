@@ -16,6 +16,7 @@ afterSpace = ['.', ',',':',')','%']
 beforSpace = ['°','(']
 emptyStr = ['.','','[newline]']
 dotsArr = [".",",","!","?",":",";","мм","и"]
+dotsArrSpace = ["мм","и"]
 dotsArrEntity = [".",",","!","?",":",";","(",")","°","/","\\","-","-","°","и"]
 
 pJoinSent = re.compile(u'\.[А-Я]')

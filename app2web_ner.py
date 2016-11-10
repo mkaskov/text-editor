@@ -134,15 +134,21 @@ def parse_search(text,exist_category,use_exist_category=False):
 def appendPunktMars(entity):
     for x in entity:
         tokensEnt = du.tokenizer_tpp(x["entity"], core._TTP_WORD_SPLIT)
-        tokensAns = du.tokenizer_tpp(x["answer"], core._TTP_WORD_SPLIT)
+        for y,answer in enumerate(x["answer"]):
+            tokensAns = du.tokenizer_tpp(answer, core._TTP_WORD_SPLIT)
 
-        if len(tokensAns)>0 and len(tokensEnt)>0:
-            dotEntEnd = tokensEnt[-1]
-            dotEntStart = tokensEnt[0]
-            dotAnsEnd = tokensAns[-1]
-            dotAnsStart = tokensAns[0]
-            if dotEntEnd in tu.dotsArr and not dotEntEnd==dotAnsEnd: x["answer"]=x["answer"] + " " + dotEntEnd
-            if dotEntStart in tu.dotsArr and not dotEntStart==dotAnsStart: x["answer"] = dotEntStart +" "+ x["answer"]
+            if len(tokensAns)>0 and len(tokensEnt)>0:
+                dotEntEnd = tokensEnt[-1]
+                dotEntStart = tokensEnt[0]
+                dotAnsEnd = tokensAns[-1]
+                dotAnsStart = tokensAns[0]
+                if dotEntEnd in tu.dotsArr and not dotEntEnd==dotAnsEnd:
+                    if dotEntEnd in tu.dotsArrSpace:
+                        answer=answer + " " + dotEntEnd
+                    else:
+                        answer = answer + dotEntEnd
+                if dotEntStart in tu.dotsArr and not dotEntStart==dotAnsStart: answer = dotEntStart +" "+ answer
+                x["answer"][y] = answer
 
     return entity
 
@@ -311,7 +317,7 @@ def parse_search_double_parse():
         integrity = ner.check_integrity(exist_text, category, [x["entity"] for x in entity])
     else: integrity = ner.check_integrity(exist_category+exist_text, category, [x["entity"] for x in entity])
 
-    # entity = appendPunktMars(entity)
+    entity = appendPunktMars(entity)
     answer = jsonify(_integrity=integrity, _resolved=resolved, entity=entity, category=category)
 
     if 'readable' in request.json: return answer

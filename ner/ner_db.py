@@ -32,7 +32,7 @@ def search(dataBase, category, entity, core):
 
     for row in entity:
         result = searchBaseInField('in',finalBase,tu.getRaw(row["entity"], core))
-        if len(result) > 0: row["answer"] = [item["out"] for i,item in result.iterrows()]
+        if len(result) > 0: row["answer"] = [item["out"].encode("utf-8") for i,item in result.iterrows()]
     return entity
 
 def isInputExist(type, db, text, core):
