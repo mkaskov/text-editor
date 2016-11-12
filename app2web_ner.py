@@ -354,7 +354,9 @@ def parse_search_double_parse():
 
         if 'readable' in request.json: return answer
         return jsonify(answer=answer.get_data(as_text=True))
-    finally:
+    except TypeError:
+        return jsonify(answer=None)
+    else:
         return jsonify(answer=None)
 
 @app.route('/ner/parse/search/tag', methods=['POST'])
