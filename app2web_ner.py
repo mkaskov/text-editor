@@ -213,36 +213,86 @@ def parse_search_simple():
 @app.route('/ner/parse/search', methods=['POST'])
 def parse_search_double_parse():
 
-    text, cellid = getQuery(request)
-    exist_category,exist_text,use_exist_category = prepareForSearch(text,cellid)
-    entity, category = parse_search(exist_text,exist_category,use_exist_category)
+    try:
+        text, cellid = getQuery(request)
+        exist_category,exist_text,use_exist_category = prepareForSearch(text,cellid)
+        entity, category = parse_search(exist_text,exist_category,use_exist_category)
 
-    finalAppend = False
-    if len(exist_category)==0 and len(category)>0: finalAppend = True
-    resolved = checkResolved(entity)
+        finalAppend = False
+        if len(exist_category)==0 and len(category)>0: finalAppend = True
+        resolved = checkResolved(entity)
 
-    if use_exist_category:
-        integrity = ner.check_integrity(exist_text, category, [x["entity"] for x in entity])
-    else: integrity = ner.check_integrity(exist_category+exist_text, category, [x["entity"] for x in entity])
+        if use_exist_category:
+            integrity = ner.check_integrity(exist_text, category, [x["entity"] for x in entity])
+        else: integrity = ner.check_integrity(exist_category+exist_text, category, [x["entity"] for x in entity])
 
-    if not resolved or not integrity:
-        print ("\n[Firts search results]")
-        print("[resolved]", resolved)
-        print("[integrity]", integrity)
+        if not resolved or not integrity:
+            print ("\n[Firts search results]")
+            print("[resolved]", resolved)
+            print("[integrity]", integrity)
 
-    if not resolved and integrity:
-        print("-----------------Second try to resolve-------------------------------")
+        if not resolved and integrity:
+            print("-----------------Second try to resolve-------------------------------")
 
-        newText = ""
-        newEntity = []
-        lastEnd = 0
-        lastStart = -1
+            newText = ""
+            newEntity = []
+            lastEnd = 0
+            lastStart = -1
 
-        for i, item in enumerate(entity):
-            if len(item["answer"]) == 0:
-                if lastStart==-1: lastStart=i
-                newText+=" " +item["entity"]
-            elif len(newText)>0:
+            for i, item in enumerate(entity):
+                if len(item["answer"]) == 0:
+                    if lastStart==-1: lastStart=i
+                    newText+=" " +item["entity"]
+                elif len(newText)>0:
+                    _entity = ner_db.search(dataBase, category, [newText], core)
+                    resolved = checkResolved(_entity)
+
+                    _entity2, _category2 = parse_search(newText, category, use_exist_category)
+                    resolved2 = checkResolved(_entity2)
+
+                    if resolved2:
+                        newText = ""
+                        newEntity += entity[lastEnd:lastStart] + _entity2
+                        lastEnd = i + 1
+                        lastStart = -1
+                    elif resolved:
+                        newText = ""
+                        newEntity += entity[lastEnd:lastStart] + _entity
+                        lastEnd = i + 1
+                        lastStart = -1
+                    else:
+                        _entity, _category = parse_search(category+" "+newText, category, use_exist_category)
+
+                        print("-----------------------------------------------")
+                        print("[parsed second category]", _category)
+                        print("[parsed second text]")
+                        for x in _entity:
+                            print("--------------------------------")
+                            print("[Answer second]", x["answer"])
+                            print("[Entity second]", x["entity"])
+                        print("[/parsed second text]")
+
+                        _resolved = checkResolved(_entity)
+                        _integrity = ner.check_integrity(newText, "", [x["entity"] for x in _entity])
+
+                        newText = ""
+
+                        print("\n[resolved second]", _resolved)
+                        print("[integrity second]", _integrity)
+
+                        if _integrity and _resolved:
+                            print ("[second try sucessfull]",i)
+                            newEntity += entity[lastEnd:lastStart] +_entity
+                            lastEnd = i+1
+                            lastStart = -1
+
+                            print ("[current new entity]")
+                            for i, item in enumerate(newEntity):
+                                print(i, item["entity"])
+                        else:
+                            lastStart =-1
+
+            if len(newText)>0:
                 _entity = ner_db.search(dataBase, category, [newText], core)
                 resolved = checkResolved(_entity)
 
@@ -250,109 +300,62 @@ def parse_search_double_parse():
                 resolved2 = checkResolved(_entity2)
 
                 if resolved2:
-                    newText = ""
                     newEntity += entity[lastEnd:lastStart] + _entity2
-                    lastEnd = i + 1
-                    lastStart = -1
+                    entity = newEntity
                 elif resolved:
-                    newText = ""
                     newEntity += entity[lastEnd:lastStart] + _entity
-                    lastEnd = i + 1
-                    lastStart = -1
+                    entity = newEntity
                 else:
                     _entity, _category = parse_search(category+" "+newText, category, use_exist_category)
 
                     print("-----------------------------------------------")
-                    print("[parsed second category]", _category)
-                    print("[parsed second text]")
+                    print("[parsed final category]", _category)
+                    print("[parsed final text]")
                     for x in _entity:
                         print("--------------------------------")
-                        print("[Answer second]", x["answer"])
-                        print("[Entity second]", x["entity"])
-                    print("[/parsed second text]")
+                        print("[Answer final]", x["answer"])
+                        print("[Entity final]", x["entity"])
+                    print("[/parsed final text]")
 
                     _resolved = checkResolved(_entity)
                     _integrity = ner.check_integrity(newText, "", [x["entity"] for x in _entity])
 
-                    newText = ""
-
-                    print("\n[resolved second]", _resolved)
-                    print("[integrity second]", _integrity)
+                    print("\n[resolved final]", _resolved)
+                    print("[integrity final]", _integrity)
 
                     if _integrity and _resolved:
-                        print ("[second try sucessfull]",i)
-                        newEntity += entity[lastEnd:lastStart] +_entity
-                        lastEnd = i+1
-                        lastStart = -1
+                        print("[second try sucessfull]", i)
+                        newEntity += entity[lastEnd:lastStart] + _entity
 
-                        print ("[current new entity]")
+                        print("[current new entity]")
                         for i, item in enumerate(newEntity):
                             print(i, item["entity"])
-                    else:
-                        lastStart =-1
 
-        if len(newText)>0:
-            _entity = ner_db.search(dataBase, category, [newText], core)
-            resolved = checkResolved(_entity)
+                        entity = newEntity
 
-            _entity2, _category2 = parse_search(newText, category, use_exist_category)
-            resolved2 = checkResolved(_entity2)
-
-            if resolved2:
-                newEntity += entity[lastEnd:lastStart] + _entity2
+            elif len(newEntity) > 0:
+                newEntity += entity[lastEnd-1:len(entity)]
                 entity = newEntity
-            elif resolved:
-                newEntity += entity[lastEnd:lastStart] + _entity
-                entity = newEntity
-            else:
-                _entity, _category = parse_search(category+" "+newText, category, use_exist_category)
 
-                print("-----------------------------------------------")
-                print("[parsed final category]", _category)
-                print("[parsed final text]")
-                for x in _entity:
-                    print("--------------------------------")
-                    print("[Answer final]", x["answer"])
-                    print("[Entity final]", x["entity"])
-                print("[/parsed final text]")
+            for i,item in enumerate(entity):
+                print (i,item["entity"])
 
-                _resolved = checkResolved(_entity)
-                _integrity = ner.check_integrity(newText, "", [x["entity"] for x in _entity])
+        print ("----------------__Finish check_----------------------------")
+        resolved = checkResolved(entity)
+        if use_exist_category:
+            integrity = ner.check_integrity(exist_text, category, [x["entity"] for x in entity])
+        else: integrity = ner.check_integrity(exist_category+exist_text, category, [x["entity"] for x in entity])
 
-                print("\n[resolved final]", _resolved)
-                print("[integrity final]", _integrity)
+        if finalAppend:
+            appendEntity = {"entity":category,"answer":[category]}
+            entity = [appendEntity] +  entity
+        entity = appendPunktMars(entity)
+        answer = jsonify(_integrity=integrity, _resolved=resolved, entity=entity, category=category)
 
-                if _integrity and _resolved:
-                    print("[second try sucessfull]", i)
-                    newEntity += entity[lastEnd:lastStart] + _entity
-
-                    print("[current new entity]")
-                    for i, item in enumerate(newEntity):
-                        print(i, item["entity"])
-
-                    entity = newEntity
-
-        elif len(newEntity) > 0:
-            newEntity += entity[lastEnd-1:len(entity)]
-            entity = newEntity
-
-        for i,item in enumerate(entity):
-            print (i,item["entity"])
-
-    print ("----------------__Finish check_----------------------------")
-    resolved = checkResolved(entity)
-    if use_exist_category:
-        integrity = ner.check_integrity(exist_text, category, [x["entity"] for x in entity])
-    else: integrity = ner.check_integrity(exist_category+exist_text, category, [x["entity"] for x in entity])
-
-    if finalAppend:
-        appendEntity = {"entity":category,"answer":[category]}
-        entity = [appendEntity] +  entity
-    entity = appendPunktMars(entity)
-    answer = jsonify(_integrity=integrity, _resolved=resolved, entity=entity, category=category)
-
-    if 'readable' in request.json: return answer
-    return jsonify(answer=answer.get_data(as_text=True))
+        if 'readable' in request.json: return answer
+        return jsonify(answer=answer.get_data(as_text=True))
+    finally:
+        return jsonify(answer=None)
 
 @app.route('/ner/parse/search/tag', methods=['POST'])
 def parse_search_tag():
