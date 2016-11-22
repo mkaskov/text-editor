@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Start with logging and data path
 data_dir=/home/user/Documents/editor_data/NERparser4_071016
-url_database=/home/user/datasets/construction_text_base/DB_3col281016.xlsx
+url_database=/home/user/datasets/construction_text_base/DB_3col211116.xlsx
 #data_dir=/home/user/Documents/editor_data/NERparser3_051016
 #data_dir=/home/user/Documents/editor_data/NERparser3_300916
 echo "Text Editor on dataset "$data_dir

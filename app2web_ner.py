@@ -16,18 +16,21 @@ from __future__ import print_function
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from nnet import initialization, core
-from ner import ner,ner_db
+from ner import ner
+from develop import ner_db as NERDB
 import re
 from nnet import data_utils as du
 from util import textUtil as tu
 import docker_prepare
+
+
 
 # Obtain the flask app object
 app = Flask(__name__)
 CORS(app)
 
 global core
-global dataBase
+global nerdb
 
 def checkResolved(entity):
     for item in entity:
@@ -44,10 +47,10 @@ def splitForSearch(sourceText, cellid):
     [print("[splitted]",x.decode("utf-8").strip(),len(x.decode("utf-8").strip())) for x in tableRow]
 
     for i,cat in enumerate(tableRow):
-        if ner_db.isInputExist("category",dataBase,cat,core): category = tu.removeSamples(cat,core).strip()
+        if nerdb.isInputExist("category",cat,core): category = tu.removeSamples(cat,core).strip()
 
     if len(category)==0:
-        if ner_db.isInputExist("category",dataBase, tableRow[0], core): category = tu.removeSamples(tableRow[0],core).strip()
+        if nerdb.isInputExist("category",tableRow[0], core): category = tu.removeSamples(tableRow[0],core).strip()
 
     text = tableRow[cellid].strip()
 
@@ -59,13 +62,13 @@ def parse_search(text,exist_category,use_exist_category=False):
     if not use_exist_category:
         if len(category)>0:
             print("-----------1")
-            if ner_db.isInputExist("category", dataBase, category, core):
+            if nerdb.isInputExist("category", category, core):
                 use_exist_category = True
                 category  = tu.removeSamples(category, core).strip()
                 exist_category = category
                 print ("-----------2")
 
-        elif ner_db.isInputExist("category", dataBase, entity[0], core):
+        elif nerdb.isInputExist("category", entity[0], core):
             use_exist_category = True
             category = tu.removeSamples(entity[0],core).strip()
             exist_category = category
@@ -152,7 +155,7 @@ def parse_search(text,exist_category,use_exist_category=False):
     [print("[]", x) for x in entity]
     print("[/ner exist entity]")
 
-    entity = ner_db.search(dataBase, category, entity, core)
+    entity = nerdb.search(category, entity, core)
     return entity, category
 
 def appendPunktMars(entity):
@@ -244,7 +247,7 @@ def parse_search_double_parse():
                     if lastStart==-1: lastStart=i
                     newText+=" " +item["entity"]
                 elif len(newText)>0:
-                    _entity = ner_db.search(dataBase, category, [newText], core)
+                    _entity = nerdb.search(category, [newText], core)
                     resolved = checkResolved(_entity)
 
                     _entity2, _category2 = parse_search(newText, category, use_exist_category)
@@ -293,7 +296,7 @@ def parse_search_double_parse():
                             lastStart =-1
 
             if len(newText)>0:
-                _entity = ner_db.search(dataBase, category, [newText], core)
+                _entity = nerdb.search(category, [newText], core)
                 resolved = checkResolved(_entity)
 
                 _entity2, _category2 = parse_search(newText, category, use_exist_category)
@@ -393,5 +396,5 @@ if __name__ == "__main__":
     FLAGS, _TTP_WORD_SPLIT, _buckets,app_options = initialization.getParams()
     if app_options["fixdataset"]: docker_prepare.fix_dataset()
     core = core.Core(FLAGS, _TTP_WORD_SPLIT, _buckets,app_options)
-    dataBase = ner_db.connectToBase(app_options["url_database"],core)
+    nerdb = NERDB.NerDB(app_options["url_database"],core)
     app.run(host='0.0.0.0', port=FLAGS.port, debug=True, use_reloader=False, threaded=False)
