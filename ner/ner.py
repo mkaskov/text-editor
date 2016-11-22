@@ -159,6 +159,10 @@ def end_to_start_concat_entity(entity_arr, startTag, middleTag, endTag):
 def clean_tags_entity(entity):
     return [x[0].strip() for x in entity]
 
+def setGlobalCore(core_):
+    global core
+    core = core_
+
 def check_integrity(orig, cat, ent):
     final = "".join(du.tokenizer_tpp(tu.removeSamples(cat + "".join(ent), core),core._TTP_WORD_SPLIT))
     orig = "".join(du.tokenizer_tpp(tu.removeSamples(orig, core),core._TTP_WORD_SPLIT))
@@ -248,10 +252,8 @@ def clean_tags(category,entity):
 
     return category,entity
 
-def parse_tags(text,core_):
+def parse_tags(text):
     window = 30
-    global core
-    core = core_
 
     tokens = du.tokenizer_tpp(text,core._TTP_WORD_SPLIT)
     clusters = int(len(tokens) / window)
@@ -263,11 +265,8 @@ def parse_tags(text,core_):
 
     return category,entity
 
-def parse(text,core_,cleanTags=True):
-    global core
-    core = core_
-
-    category, entity = parse_tags(text, core_)
+def parse(text,cleanTags=True):
+    category, entity = parse_tags(text)
     entity = clearSingleDots(entity)
     entity = cleanBeginigDots(entity)
 

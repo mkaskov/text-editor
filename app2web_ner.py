@@ -13,17 +13,17 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import re
+
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from nnet import initialization, core
-from ner import ner
-from develop import ner_db as NERDB
-import re
-from nnet import data_utils as du
-from util import textUtil as tu
+
 import docker_prepare
-
-
+from ner import ner_db as NERDB
+from ner import ner
+from nnet import data_utils as du
+from nnet import initialization, core
+from util import textUtil as tu
 
 # Obtain the flask app object
 app = Flask(__name__)
@@ -43,18 +43,21 @@ def splitForSearch(sourceText, cellid):
     sourceText = tu.replace_celsius(sourceText)
     tableRow = re.split(_WORD_SPLIT,sourceText.strip())
     category = ""
+    category_cellid = -1
 
     [print("[splitted]",x.decode("utf-8").strip(),len(x.decode("utf-8").strip())) for x in tableRow]
 
     for i,cat in enumerate(tableRow):
-        if nerdb.isInputExist("category",cat,core): category = tu.removeSamples(cat,core).strip()
+        if nerdb.isInputExist("category",cat,core):
+            category_cellid = i
+            category = tu.removeSamples(cat,core).strip()
 
     if len(category)==0:
         if nerdb.isInputExist("category",tableRow[0], core): category = tu.removeSamples(tableRow[0],core).strip()
 
     text = tableRow[cellid].strip()
 
-    return category,text
+    return category,text,len(text.decode("utf-8").strip()),category_cellid,tableRow
 
 def parse_search(text,exist_category,use_exist_category=False):
     category, entity = ner.parse(text,core)
@@ -195,7 +198,7 @@ def prepareForSearch(text,cellid):
     exist_category = ""
 
     if (cellid > -1):
-        exist_category, exist_text = splitForSearch(text, cellid)
+        exist_category, exist_text,len_exist_text,category_cellid,row = splitForSearch(text, cellid)
         if len(exist_text) > 0:
             text = exist_category + " " + exist_text
             if(len(exist_category)>0):
@@ -203,7 +206,7 @@ def prepareForSearch(text,cellid):
     else:
         text = re.sub("\[\|\|\]", " ", text)
     print ("[user exist category]",use_exist_category,exist_category)
-    return exist_category,text,use_exist_category
+    return exist_category,text,use_exist_category,len_exist_text,category_cellid,row,exist_text
 
 @app.route('/ner/parse/search/simple', methods=['POST'])
 def parse_search_simple():
@@ -213,12 +216,69 @@ def parse_search_simple():
     integrity = ner.check_integrity(text, category, [x["entity"] for x in entity])
     return jsonify(_integrity=integrity, _resolved=resolved, entity=entity, category=category)
 
-@app.route('/ner/parse/search', methods=['POST'])
-def parse_search_double_parse():
+def postSimpleBaseSearch(entity,row,cellid,category_cellid):
+    print (row[cellid])
+    print (row[category_cellid])
 
+    if not cellid-1==category_cellid:
+        catText = row[cellid-1]
+        catText = tu.removeSpaces(catText)
+
+        print("[cattext]", catText)
+
+        for i1,x in enumerate(entity):
+            for i2,z in enumerate(x["answer"]):
+                if z.find(catText)==0:
+                    entity[i1]["answer"][i2] = z[len(catText):].strip()
+                    print (entity[i1]["answer"][i2])
+
+    if cellid+1<len(row):
+        postEntity = row[cellid+1]
+        postEntity = tu.removeSpaces(postEntity)
+
+        print("[postEntity]", postEntity)
+
+        for i1, x in enumerate(entity):
+            for i2, z in enumerate(x["answer"]):
+                if z.find(postEntity) > 0:
+                    entity[i1]["answer"][i2] = z[:len(z)-len(postEntity)].strip()
+                    print(entity[i1]["answer"][i2])
+
+@app.route('/ner/parse/search', methods=['POST'])
+def entry_point():
+    text, cellid = getQuery(request)
+    exist_category, exist_text, use_exist_category, len_exist_text,category_cellid,row,cellText = prepareForSearch(text, cellid)
+
+    if len_exist_text > nerdb.maxLenChar or cellid==-1 or len(row)==1:
+        return ner_parse_search(exist_category, exist_text, use_exist_category, len_exist_text, category_cellid, row, cellText)
+    else:
+        print("Try find")
+        isCategoryInBase = nerdb.isInputExist("category",exist_category,core)
+        if(isCategoryInBase):
+            entity = nerdb.search(exist_category,[cellText],core,False)
+
+            resolved = checkResolved(entity)
+            if not resolved:
+                return ner_parse_search(exist_category, exist_text, use_exist_category, len_exist_text, category_cellid, row, cellText)
+
+            postSimpleBaseSearch(entity,row,cellid,category_cellid)
+
+            integrity = ner.check_integrity(exist_text, exist_category, [x["entity"] for x in entity])
+
+            answer = jsonify(_integrity=integrity, _resolved=resolved, entity=entity, category=exist_category)
+
+            return jsonify(answer=answer.get_data(as_text=True))
+        else:
+            print ("category not in base")
+            return ner_parse_search(exist_category, exist_text, use_exist_category, len_exist_text,
+                                    category_cellid, row, cellText)
+
+    return jsonify(answer=None)
+
+
+def ner_parse_search(exist_category, exist_text, use_exist_category, len_exist_text, category_cellid, row, cellText):
+    print("Ner Parse")
     try:
-        text, cellid = getQuery(request)
-        exist_category,exist_text,use_exist_category = prepareForSearch(text,cellid)
         entity, category = parse_search(exist_text,exist_category,use_exist_category)
 
         finalAppend = False
@@ -397,4 +457,5 @@ if __name__ == "__main__":
     if app_options["fixdataset"]: docker_prepare.fix_dataset()
     core = core.Core(FLAGS, _TTP_WORD_SPLIT, _buckets,app_options)
     nerdb = NERDB.NerDB(app_options["url_database"],core)
+    ner.setGlobalCore(core)
     app.run(host='0.0.0.0', port=FLAGS.port, debug=True, use_reloader=False, threaded=False)
