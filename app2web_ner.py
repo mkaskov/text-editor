@@ -48,12 +48,12 @@ def splitForSearch(sourceText, cellid):
     [print("[splitted]",x.decode("utf-8").strip(),len(x.decode("utf-8").strip())) for x in tableRow]
 
     for i,cat in enumerate(tableRow):
-        if nerdb.isInputExist("category",cat,core):
+        if nerdb.isInputExist(nerdb.category,cat):
             category_cellid = i
             category = tu.removeSamples(cat,core).strip()
 
     if len(category)==0:
-        if nerdb.isInputExist("category",tableRow[0], core): category = tu.removeSamples(tableRow[0],core).strip()
+        if nerdb.isInputExist(nerdb.category,tableRow[0]): category = tu.removeSamples(tableRow[0],core).strip()
 
     text = tableRow[cellid].strip()
 
@@ -65,13 +65,13 @@ def parse_search(text,exist_category,use_exist_category=False):
     if not use_exist_category:
         if len(category)>0:
             print("-----------1")
-            if nerdb.isInputExist("category", category, core):
+            if nerdb.isInputExist(nerdb.category, category):
                 use_exist_category = True
                 category  = tu.removeSamples(category, core).strip()
                 exist_category = category
                 print ("-----------2")
 
-        elif nerdb.isInputExist("category", entity[0], core):
+        elif nerdb.isInputExist(nerdb.category, entity[0]):
             use_exist_category = True
             category = tu.removeSamples(entity[0],core).strip()
             exist_category = category
@@ -158,7 +158,7 @@ def parse_search(text,exist_category,use_exist_category=False):
     [print("[]", x) for x in entity]
     print("[/ner exist entity]")
 
-    entity = nerdb.search(category, entity, core)
+    entity = nerdb.search(category, entity)
     return entity, category
 
 def appendPunktMars(entity):
@@ -253,9 +253,11 @@ def entry_point():
         return ner_parse_search(exist_category, exist_text, use_exist_category, len_exist_text, category_cellid, row, cellText)
     else:
         print("Try find")
-        isCategoryInBase = nerdb.isInputExist("category",exist_category,core)
+        isCategoryInBase = nerdb.isInputExist(nerdb.category,exist_category)
         if(isCategoryInBase):
-            entity = nerdb.search(exist_category,[cellText],core,False)
+            entity = nerdb.search(exist_category,[cellText],False)
+
+            print (entity)
 
             resolved = checkResolved(entity)
             if not resolved:
@@ -456,6 +458,6 @@ if __name__ == "__main__":
     FLAGS, _TTP_WORD_SPLIT, _buckets,app_options = initialization.getParams()
     if app_options["fixdataset"]: docker_prepare.fix_dataset()
     core = core.Core(FLAGS, _TTP_WORD_SPLIT, _buckets,app_options)
-    nerdb = NERDB.NerDB(app_options["url_database"],core)
+    nerdb = NERDB.NerDB(app_options["url_database"],core,app_options["connect_to_db"])
     ner.setGlobalCore(core)
     app.run(host='0.0.0.0', port=FLAGS.port, debug=True, use_reloader=False, threaded=False)

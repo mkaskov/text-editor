@@ -73,7 +73,8 @@ def getParams():
         "fixdataset": False,
         "web":False,
         "reduce_gpu":False,
-        "forward_only":False
+        "forward_only":False,
+        "connect_to_db":False
     }
 
     # read data from model.ini, if file exist and app flags
