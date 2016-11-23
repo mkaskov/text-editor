@@ -323,3 +323,14 @@ from elasticsearch import Elasticsearch
 import pandas as pd
 
 print (pd.__version__)
+
+# base = pd.DataFrame({"category": "","input":"","output":""})
+# print (base)
+
+# d = {'col1': "", 'col2': ""}
+# df = pd.DataFrame(data=d, index=None)
+import datetime
+columns = ['A','B', 'C']
+df_ = pd.DataFrame(columns=columns)
+# df_ = df_.fillna("")
+print (df_)

@@ -37,22 +37,30 @@ class NerDB(object):
         self.url_database = url_database
 
     def reConnectToDb(self):
-        if self.connectToDdBool:
-            self.category = "category"
-            self.input = "input"
-            self.output = "output"
-            self.connectToDB('postgresql://'+self.url_database)
+        try:
+            if self.connectToDdBool:
+                self.category = "category"
+                self.input = "input"
+                self.output = "output"
+                self.connectToDB('postgresql://'+self.url_database)
+            else:
+                self.category = "category"
+                self.input = "in"
+                self.output = "out"
+                self.connectToExel(self.url_database)
+        except TypeError:
+            self.initEmptyDB()
         else:
-            self.category = "category"
-            self.input = "in"
-            self.output = "out"
-            self.connectToExel(self.url_database)
+            self.initEmptyDB()
 
         self.prepareBase()
 
         self.maxLenChar = self.base[self.input].map(lambda x: len(x.decode("utf-8"))).max()
         print (datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),"[URL DATABASE]",self.url_database)
         print (datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),"[CONNECT TO DB]",self.connectToDdBool)
+
+    def initEmptyDB(self):
+        self.base = pd.DataFrame([self.category,self.input,self.output])
 
     def prepareBase(self):
         self.base['orig'] = self.base[self.input]
