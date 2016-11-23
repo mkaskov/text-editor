@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Start with logging and data path
 data_dir=/home/user/Documents/editor_data/NERparser4_071016
-url_database=ttpuser@localhost:5432/ttp
+url_database=ttpuser:ttppassword@localhost:5432/ttp
 echo "Text Editor on dataset "$data_dir
 echo "Database: "$url_database
 echo "Starting seq2seq model..."
