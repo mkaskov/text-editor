@@ -40,21 +40,16 @@ class NerDB(object):
         self.url_database = url_database
 
     def reConnectToDb(self):
-        try:
-            if self.connectToDdBool:
-                self.category = "category"
-                self.input = "input"
-                self.output = "output"
-                self.connectToDB('postgresql://'+self.url_database)
-            else:
-                self.category = "category"
-                self.input = "in"
-                self.output = "out"
-                self.connectToExel(self.url_database)
-        except TypeError:
-            self.initEmptyDB()
+        if self.connectToDdBool:
+            self.category = "category"
+            self.input = "input"
+            self.output = "output"
+            self.connectToDB('postgresql://'+self.url_database)
         else:
-            self.initEmptyDB()
+            self.category = "category"
+            self.input = "in"
+            self.output = "out"
+            self.connectToExel(self.url_database)
 
         self.prepareBase()
         self.maxLenChar = self.base[self.input].map(lambda x: len(x.decode("utf-8"))).max()
@@ -83,8 +78,6 @@ class NerDB(object):
             base.drop('userid', axis=1, inplace=True)
             self.base = base
         except ProgrammingError:
-            self.initEmptyDB()
-        else:
             self.initEmptyDB()
 
     def getRaw(self,text):
