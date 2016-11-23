@@ -10,10 +10,9 @@ from util import textUtil as tu
 from nnet import data_utils as du
 import re
 from sqlalchemy import create_engine
-import threading
+import datetime
 
 import pandas as pd
-
 
 class NerDB(object):
 
@@ -28,11 +27,14 @@ class NerDB(object):
     global url_database
     global connectToDdBool
 
-    def __init__(self,url_database,core,connectToDdBool=False):
+    def __init__(self,url_database,core,connectToDdBool):
         self.core = core
+        self.setParameters(url_database,connectToDdBool)
+        self.reConnectToDb()
+
+    def setParameters(self,url_database,connectToDdBool=False):
         self.connectToDdBool = connectToDdBool
         self.url_database = url_database
-        self.reConnectToDb()
 
     def reConnectToDb(self):
         if self.connectToDdBool:
@@ -49,8 +51,8 @@ class NerDB(object):
         self.prepareBase()
 
         self.maxLenChar = self.base[self.input].map(lambda x: len(x.decode("utf-8"))).max()
-        print (self.base)
-        # threading.Timer(60, self.reConnectToDb()).start()
+        print (datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),"[URL DATABASE]",self.url_database)
+        print (datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),"[CONNECT TO DB]",self.connectToDdBool)
 
     def prepareBase(self):
         self.base['orig'] = self.base[self.input]

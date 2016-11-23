@@ -208,15 +208,15 @@ def prepareForSearch(text,cellid):
     print ("[user exist category]",use_exist_category,exist_category)
     return exist_category,text,use_exist_category,len_exist_text,category_cellid,row,exist_text
 
-@app.route('/ner/parse/search/simple', methods=['POST'])
-def parse_search_simple():
-    text = request.json['query'].encode("utf-8")
-    entity, category = parse_search(text)
-    resolved = checkResolved(entity)
-    integrity = ner.check_integrity(text, category, [x["entity"] for x in entity])
-    return jsonify(_integrity=integrity, _resolved=resolved, entity=entity, category=category)
+# @app.route('/ner/parse/search/simple', methods=['POST'])
+# def parse_search_simple():
+#     text = request.json['query'].encode("utf-8")
+#     entity, category = parse_search(text)
+#     resolved = checkResolved(entity)
+#     integrity = ner.check_integrity(text, category, [x["entity"] for x in entity])
+#     return jsonify(_integrity=integrity, _resolved=resolved, entity=entity, category=category)
 
-def postSimpleBaseSearch(entity,row,cellid,category_cellid):
+def simpleBaseSearch(entity, row, cellid, category_cellid):
     print (row[cellid])
     print (row[category_cellid])
 
@@ -263,7 +263,7 @@ def entry_point():
             if not resolved:
                 return ner_parse_search(exist_category, exist_text, use_exist_category, len_exist_text, category_cellid, row, cellText)
 
-            postSimpleBaseSearch(entity,row,cellid,category_cellid)
+            simpleBaseSearch(entity, row, cellid, category_cellid)
 
             integrity = ner.check_integrity(exist_text, exist_category, [x["entity"] for x in entity])
 
@@ -276,7 +276,6 @@ def entry_point():
                                     category_cellid, row, cellText)
 
     return jsonify(answer=None)
-
 
 def ner_parse_search(exist_category, exist_text, use_exist_category, len_exist_text, category_cellid, row, cellText):
     print("Ner Parse")
@@ -432,7 +431,7 @@ def parse_search_tag():
     category, entity = ner.clean_tags(_category, _entity)
     category = category[0] if len(category) > 0 else ""
     integrity = ner.check_integrity(text, category, entity)
-    entity = ner_db.search(dataBase, category, entity, core)
+    entity = nerdb.search(category, entity)
     resolved = checkResolved(entity)
 
     finalEntity = []
@@ -453,6 +452,16 @@ def parse_tag():
     category, entity = ner.parse_tags(text,core)
     category = category[0] if len(category)>0 else ""
     return jsonify(entity=entity, category=category)
+
+@app.route('/db/update', methods=['POST'])
+def updateDB():
+    query = request.json
+
+    if 'url' in query.keys() and 'connecttodb':
+        nerdb.setParameters(query["url"],query['connecttodb'])
+    nerdb.reConnectToDb()
+
+    return jsonify(answer="ok")
 
 if __name__ == "__main__":
     FLAGS, _TTP_WORD_SPLIT, _buckets,app_options = initialization.getParams()
