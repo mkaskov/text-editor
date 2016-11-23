@@ -332,5 +332,5 @@ print (pd.__version__)
 import datetime
 columns = ['A','B', 'C']
 df_ = pd.DataFrame(columns=columns)
-# df_ = df_.fillna("")
+df_ = df_.fillna("")
 print (df_)

@@ -6,6 +6,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+from sqlalchemy.exc import ProgrammingError
+
 from util import textUtil as tu
 from nnet import data_utils as du
 import re
@@ -29,6 +31,7 @@ class NerDB(object):
 
     def __init__(self,url_database,core,connectToDdBool):
         self.core = core
+        self.maxLenChar = 0
         self.setParameters(url_database,connectToDdBool)
         self.reConnectToDb()
 
@@ -54,13 +57,12 @@ class NerDB(object):
             self.initEmptyDB()
 
         self.prepareBase()
-
         self.maxLenChar = self.base[self.input].map(lambda x: len(x.decode("utf-8"))).max()
         print (datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),"[URL DATABASE]",self.url_database)
         print (datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),"[CONNECT TO DB]",self.connectToDdBool)
 
     def initEmptyDB(self):
-        self.base = pd.DataFrame([self.category,self.input,self.output])
+        self.base = pd.DataFrame(columns=[self.category,self.input,self.output])
 
     def prepareBase(self):
         self.base['orig'] = self.base[self.input]
@@ -73,12 +75,17 @@ class NerDB(object):
         self.base = pd.read_excel(url_database, sheetname=0, header=None, names=[self.category, self.input, self.output])
 
     def connectToDB(self,url_database):
-        engine = create_engine(url_database)
-        base = pd.read_sql_query('select * from "learnpair"', con=engine)
-        base.drop('id', axis=1, inplace=True)
-        base.drop('createddate', axis=1, inplace=True)
-        base.drop('userid', axis=1, inplace=True)
-        self.base = base
+        try:
+            engine = create_engine(url_database)
+            base = pd.read_sql_query('select * from "learnpair"', con=engine)
+            base.drop('id', axis=1, inplace=True)
+            base.drop('createddate', axis=1, inplace=True)
+            base.drop('userid', axis=1, inplace=True)
+            self.base = base
+        except ProgrammingError:
+            self.initEmptyDB()
+        else:
+            self.initEmptyDB()
 
     def getRaw(self,text):
         return "".join([x for x in du.tokenizer_tpp(text, self._TTP_WORD_SPLIT) if x not in tu.dotsArrEntity])
