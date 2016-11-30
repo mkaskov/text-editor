@@ -205,6 +205,10 @@ def prepareForSearch(text,cellid):
                 use_exist_category = True
     else:
         text = re.sub("\[\|\|\]", " ", text)
+        len_exist_text = len(text)
+        category_cellid = -1
+        row = []
+        exist_text = text
     print ("[user exist category]",use_exist_category,exist_category)
     return exist_category,text,use_exist_category,len_exist_text,category_cellid,row,exist_text
 
@@ -249,7 +253,7 @@ def entry_point():
     text, cellid = getQuery(request)
     exist_category, exist_text, use_exist_category, len_exist_text,category_cellid,row,cellText = prepareForSearch(text, cellid)
 
-    if len_exist_text > nerdb.maxLenChar or cellid==-1 or len(row)==1:
+    if len_exist_text > nerdb.maxLenChar or cellid==-1 or len(row)<2:
         return ner_parse_search(exist_category, exist_text, use_exist_category, len_exist_text, category_cellid, row, cellText)
     else:
         print("Try find")
