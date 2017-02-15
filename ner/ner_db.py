@@ -63,7 +63,7 @@ class NerDB(object):
         self.base = self.base.fillna(value='')
         self.base[self.input] = self.base[self.input].apply(lambda x: tu.getRaw(x, self.core))
         self.base['orig'] = self.base['orig'].apply(lambda x: re.sub("[\s]+", " ", x))
-        self.base[self.category] = self.base[self.category].apply(lambda x: tu.getRaw(x, self.core))
+        self.base[self.category] = self.base[self.category].apply(lambda x: tu.getRaw( tu.removeSamples(x,  self.core).strip(), self.core))
 
     def connectToExel(self, url_database):
         self.base = pd.read_excel(url_database, sheetname=0, header=None, names=[self.category, self.input, self.output])
