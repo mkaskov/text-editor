@@ -1,5 +1,4 @@
 #! /usr/bin/env python
-# -*- coding: utf-8 -*-
 # by PureMind
 
 from __future__ import absolute_import
@@ -15,7 +14,7 @@ def getEntitys(sent_tokens, outputs, vocab, startTag, middleTag, endTag, lastChe
     orig_val_arr = [vocab[x] for x in outputs]
 
     dSize = len(sent_tokens) - len(orig_val_arr)
-    if dSize > 0: [orig_val_arr.append('[_At_]') for i in xrange(0, dSize)]
+    if dSize > 0: [orig_val_arr.append('[_At_]') for i in range(0, dSize)]
 
     if ignoreCategory:
         for i, item in enumerate(orig_val_arr):
@@ -236,12 +235,12 @@ def recognize_entity(sentecesEntity):
 def split_text(tokens, clusters, window):
     sentecesEntity = []
 
-    for i in xrange(0, clusters):
+    for i in range(0, clusters):
         sent = ''
-        for y in xrange(i * window, (i + 1) * window): sent += ' ' + tokens[y]
+        for y in range(i * window, (i + 1) * window): sent += ' ' + tokens[y]
         sentecesEntity.append(sent)
     sent = ''
-    for i in xrange(clusters * window, len(tokens)): sent += ' ' + tokens[i]
+    for i in range(clusters * window, len(tokens)): sent += ' ' + tokens[i]
     sentecesEntity.append(sent)
 
     return sentecesEntity

@@ -1,15 +1,14 @@
 #! /usr/bin/env python
-# -*- coding: utf-8 -*-
 # by Max8mk
 
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import urllib
+import urllib.parse
 import re
 from .switch import switch
-from cStringIO import StringIO
+from io import StringIO
 from nnet import data_utils as du
 
 afterSpace = ['.', ',',':',')','%']
@@ -36,7 +35,7 @@ def JoinSent(str):
 
 def sent_splitter(source):
   source = decode_from_java(source)
-  source = prepare_encode(source.decode('utf-8')+" ")
+  source = prepare_encode(source+" ")
   source = replace_celsius(source)
   sentences = []
 
@@ -50,7 +49,7 @@ def sent_splitter(source):
 
   SPLIT = re.compile("\. |\n")
   sentences.extend(re.split(SPLIT, source))
-  return [s.encode('utf-8') for s in sentences if s.strip() not in emptyStr]
+  return [s for s in sentences if s.strip() not in emptyStr]
 
 def replace_celsius(t):
     return t.replace(' 0С', ' °С')
@@ -60,11 +59,11 @@ def prepare_encode(t):
 
 def prepare_decode(t): return t.replace('[newline]', '').replace('[threedot]', '...').replace('[dot]', '. ')
 
-def decode_from_java(s): return urllib.unquote(s.encode('utf8'))
+def decode_from_java(s): return urllib.parse.unquote(s)
 
 def printArr(ar): [print(e) for e in ar]
 
-def removeSpaces(t): return re.sub("[\s\xA0]+", " ", t.decode('utf-8')).encode('utf-8').strip()
+def removeSpaces(t): return re.sub("[\s\xA0]+", " ", t).strip()
 
 def buildRetValue(outputs,vocab):
     retValue = StringIO()

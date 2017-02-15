@@ -1,5 +1,4 @@
 #! /usr/bin/env python
-# -*- coding: utf-8 -*-
 # Puremind.tech
 
 from __future__ import absolute_import

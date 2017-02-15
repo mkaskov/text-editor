@@ -1,5 +1,4 @@
 #! /usr/bin/env python
-# -*- coding: utf-8 -*-
 # by PureMind
 
 from __future__ import absolute_import
@@ -32,16 +31,16 @@ def connectToDB():
     base.drop('createddate', axis=1, inplace=True)
     base.drop('userid', axis=1, inplace=True)
 
-    base[input] = base[input].apply(lambda x: getRaw(x.encode("utf-8")))
-    base['orig'] = base['orig'].apply(lambda x: re.sub("[\s]+", " ", x.encode("utf-8")))
-    base[category] = base[category].apply(lambda x: getRaw(x.encode("utf-8")))
+    base[input] = base[input].apply(lambda x: getRaw(x))
+    base['orig'] = base['orig'].apply(lambda x: re.sub("[\s]+", " ", x))
+    base[category] = base[category].apply(lambda x: getRaw(x))
     return base
 
 def getRaw(text):
     return "".join([x for x in du.tokenizer_tpp(text, _TTP_WORD_SPLIT) if x not in tu.dotsArrEntity])
 
 base = connectToDB()
-maxLenChar = base[input].map(lambda x: len(x.decode("utf-8"))).max()
+maxLenChar = base[input].map(lambda x: len(x)).max()
 
 print (base)
 print (maxLenChar)

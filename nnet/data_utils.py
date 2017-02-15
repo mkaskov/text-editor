@@ -1,5 +1,4 @@
 #! /usr/bin/env python
-# -*- coding: utf-8 -*-
 
 # by Max8mk
 
@@ -43,8 +42,8 @@ def basic_tokenizer(sentence): #"""Very basic tokenizer: split the sentence into
   return [w for w in words if w]
 
 def tokenizer_tpp(t, _tokens):
-  words = re.findall(_tokens, t.decode('utf-8'))
-  return [w.encode('utf-8') for w in words if w]
+  words = re.findall(_tokens, t)
+  return [w for w in words if w]
 
 def create_vocabulary(vocabulary_path, data_path, max_vocabulary_size,
                       tokenizer=None, normalize_digits=True,ext_TTP_WORD_SPLIT=_TTP_WORD_SPLIT):

@@ -1,5 +1,4 @@
 #! /usr/bin/env python
-# -*- coding: utf-8 -*-
 # by PureMind
 
 from __future__ import absolute_import
@@ -52,7 +51,7 @@ class NerDB(object):
             self.connectToExel(self.url_database)
 
         self.prepareBase()
-        self.maxLenChar = self.base[self.input].map(lambda x: len(x.decode("utf-8"))).max()
+        self.maxLenChar = self.base[self.input].map(lambda x: len(x)).max()
         print (datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),"[URL DATABASE]",self.url_database)
         print (datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),"[CONNECT TO DB]",self.connectToDdBool)
 
@@ -62,9 +61,9 @@ class NerDB(object):
     def prepareBase(self):
         self.base['orig'] = self.base[self.input]
         self.base = self.base.fillna(value='')
-        self.base[self.input] = self.base[self.input].apply(lambda x: tu.getRaw(x.encode("utf-8"), self.core))
-        self.base['orig'] = self.base['orig'].apply(lambda x: re.sub("[\s]+", " ", x.encode("utf-8")))
-        self.base[self.category] = self.base[self.category].apply(lambda x: tu.getRaw(x.encode("utf-8"), self.core))
+        self.base[self.input] = self.base[self.input].apply(lambda x: tu.getRaw(x, self.core))
+        self.base['orig'] = self.base['orig'].apply(lambda x: re.sub("[\s]+", " ", x))
+        self.base[self.category] = self.base[self.category].apply(lambda x: tu.getRaw(x, self.core))
 
     def connectToExel(self, url_database):
         self.base = pd.read_excel(url_database, sheetname=0, header=None, names=[self.category, self.input, self.output])
@@ -105,7 +104,7 @@ class NerDB(object):
 
         for row in entity:
             result = self.searchBaseInFieldCust(self.input, finalBase, tu.getRaw(row["entity"],self.core),strong)
-            if len(result) > 0: row["answer"] = [item[self.output].encode("utf-8") for i, item in result.iterrows()]
+            if len(result) > 0: row["answer"] = [item[self.output] for i, item in result.iterrows()]
         return entity
 
     def isInputExist(self,type, text):
