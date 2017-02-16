@@ -16,7 +16,8 @@ beforSpace = ['°','(']
 emptyStr = ['.','','[newline]']
 dotsArr = [".",",","!","?",":",";","мм","и"]
 dotsArrSpace = ["мм","и"]
-dotsArrEntity = [".",",","!","?",":",";","(",")","°","/","\\","-","-","°","и"]
+# dotsArrEntity = [".",",","!","?",":",";","(",")","°","/","\\","-","-","°","и"]
+dotsArrEntity = [".",",","!","?",":",";","(",")","/","\\","-","-","и"]
 
 pJoinSent = re.compile(u'\.[А-Я]')
 
@@ -113,7 +114,10 @@ def getWordState(id,outputs,vocab,word):
     else: return 'default'
 
 def getRaw(text, core):
-    return "".join([x for x in du.tokenizer_tpp(text, core._TTP_WORD_SPLIT) if x not in dotsArrEntity])
+    resultText = " ".join([x for x in du.tokenizer_tpp(text, core._TTP_WORD_SPLIT) if x not in dotsArrEntity])
+    resultText = prepareSup(resultText)
+    resultText = re.sub("\s+","",resultText)
+    return resultText
 
 def getSplitted(text,core):
     return " ".join([x for x in du.tokenizer_tpp(text, core._TTP_WORD_SPLIT)])
@@ -125,3 +129,21 @@ def removeSamples(text,core):
     for sample in ecludeRegexSamples:
         text = re.sub(sample+"\s(\d\s)+\d+|"+sample+"\s(\d\s)+|"+sample+"\s(\d)+", " ", text)
     return re.sub("[\s]+", " ", text)
+
+def prepareSup(text):
+    supSymbols = ['⁰','¹','²','³','⁴','⁵','⁶','⁷','⁸','⁹']
+    supWord = ['/м','/мм',"/см","/дм"]
+    supWord_v2 = ['м','мм',"см","дм"]
+
+    text = re.sub("\s[0oOоО]С", "°С", text)
+    text = re.sub("\s[0oOоО]C", "°C", text)
+
+    for i in range(10):
+        for word in supWord:
+            text = re.sub(word+str(i), word+supSymbols[i], text)
+        for word in supWord_v2:
+            text = re.sub("\s"+word + str(i), word + supSymbols[i], text)
+        text = re.sub(str(i)+"[0oOоО]С", str(i)+"°С", text)
+        text = re.sub(str(i)+"[0oOоО]C", str(i)+"°C", text)
+
+    return text

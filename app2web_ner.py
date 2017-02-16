@@ -253,15 +253,29 @@ def parse_search(text,exist_category,use_exist_category=False):
 
     return entity, category
 
-def secondTryToResolve(entity,category,use_exist_category):
+def clearFromEmpty(entity):
+    return [x for x in entity if len(x['entity'])>0]
+
+def secondTryToResolve(entityArr, category, use_exist_category):
     print("______________________________Second try to resolve_____________________________")
+
+    #simpe pair search
+    for i,ent in enumerate(entityArr):
+        if i+1<len(entityArr) and len(entityArr[i+1]['answer'])==0:
+            try_to_find_full = nerdb.search(category, [entityArr[i]['entity'] + " " + entityArr[i + 1]['entity']], core)
+            if(len(try_to_find_full[0]['answer'])>0):
+                entityArr[i]['entity'] = entityArr[i]['entity'] + " " + entityArr[i + 1]['entity']
+                entityArr[i]['answer'] = try_to_find_full[0]['answer']
+                entityArr[i + 1]['entity'] = ''
+
+    entityArr = clearFromEmpty(entityArr)
 
     newText = ""
     newEntity = []
     lastEnd = 0
     lastStart = -1
 
-    for i, item in enumerate(entity):
+    for i, item in enumerate(entityArr):
         if len(item["answer"]) == 0:
             if lastStart == -1: lastStart = i
             newText += " " + item["entity"]
@@ -274,12 +288,12 @@ def secondTryToResolve(entity,category,use_exist_category):
 
             if resolved2:
                 newText = ""
-                newEntity += entity[lastEnd:lastStart] + _entity2
+                newEntity += entityArr[lastEnd:lastStart] + _entity2
                 lastEnd = i + 1
                 lastStart = -1
             elif resolved:
                 newText = ""
-                newEntity += entity[lastEnd:lastStart] + _entity
+                newEntity += entityArr[lastEnd:lastStart] + _entity
                 lastEnd = i + 1
                 lastStart = -1
             else:
@@ -304,7 +318,7 @@ def secondTryToResolve(entity,category,use_exist_category):
 
                 if _integrity and _resolved:
                     print("[second try sucessfull]", i)
-                    newEntity += entity[lastEnd:lastStart] + _entity
+                    newEntity += entityArr[lastEnd:lastStart] + _entity
                     lastEnd = i + 1
                     lastStart = -1
 
@@ -322,11 +336,11 @@ def secondTryToResolve(entity,category,use_exist_category):
         resolved2 = isResolved(_entity2)
 
         if resolved2:
-            newEntity += entity[lastEnd:lastStart] + _entity2
-            entity = newEntity
+            newEntity += entityArr[lastEnd:lastStart] + _entity2
+            entityArr = newEntity
         elif resolved:
-            newEntity += entity[lastEnd:lastStart] + _entity
-            entity = newEntity
+            newEntity += entityArr[lastEnd:lastStart] + _entity
+            entityArr = newEntity
         else:
             _entity, _category = parse_search(category + " " + newText, category, use_exist_category)
 
@@ -347,55 +361,55 @@ def secondTryToResolve(entity,category,use_exist_category):
 
             if _integrity and _resolved:
                 print("[second try sucessfull]", i)
-                newEntity += entity[lastEnd:lastStart] + _entity
+                newEntity += entityArr[lastEnd:lastStart] + _entity
 
                 print("[current new entity]")
                 for i, item in enumerate(newEntity):
                     print(i, item["entity"])
 
-                entity = newEntity
+                entityArr = newEntity
 
     elif len(newEntity) > 0:
-        newEntity += entity[lastEnd - 1:len(entity)]
-        entity = newEntity
+        newEntity += entityArr[lastEnd - 1:len(entityArr)]
+        entityArr = newEntity
 
-    # for i, item in enumerate(entity):
-    #     print(i, item["entity"])
-    #     print(" - ", item["answer"])
+    for i, item in enumerate(entityArr):
+        print(i, item["entity"])
+        print(" - ", item["answer"])
 
-    return entity
+    return entityArr
 
 def ner_parse_search(exist_category, exist_text, use_exist_category,category_cell_id, row, cell_text):
     check_text = exist_text if use_exist_category else exist_category + exist_text
 
-    try:
-        entity, category = parse_search(exist_text,exist_category,use_exist_category)
+    # try:
+    entity, category = parse_search(exist_text,exist_category,use_exist_category)
 
-        resolved = isResolved(entity)
-        integrity = isIntegrity(check_text, category, [x["entity"] for x in entity])
+    resolved = isResolved(entity)
+    integrity = isIntegrity(check_text, category, [x["entity"] for x in entity])
 
-        # if not resolved and integrity:
-        if not resolved:
-            entity = secondTryToResolve(entity,category,use_exist_category)
+    # if not resolved and integrity:
+    if not resolved:
+        entity = secondTryToResolve(entity,category,use_exist_category)
 
-        # print ("_______________________________Final check__________________________________")
-        resolved = isResolved(entity)
-        integrity = isIntegrity(check_text, category, [x["entity"] for x in entity])
+    # print ("_______________________________Final check__________________________________")
+    resolved = isResolved(entity)
+    integrity = isIntegrity(check_text, category, [x["entity"] for x in entity])
 
-        if len(exist_category) == 0 and len(category) > 0:
-            entity = [{"entity":category,"answer":[category]}] +  entity
+    if len(exist_category) == 0 and len(category) > 0:
+        entity = [{"entity":category,"answer":[category]}] +  entity
 
-        entity = appendPunktMars(entity)
+    entity = appendPunktMars(entity)
 
-        answer = jsonify(_integrity=integrity, _resolved=resolved, entity=entity, category=category)
+    answer = jsonify(_integrity=integrity, _resolved=resolved, entity=entity, category=category)
 
-        if 'readable' in request.json: return answer
+    if 'readable' in request.json: return answer
 
-        return jsonify(answer=answer.get_data(as_text=True))
-    except TypeError:
-        return jsonify(answer=None)
-    else:
-        return jsonify(answer=None)
+    return jsonify(answer=answer.get_data(as_text=True))
+    # except TypeError:
+    #     return jsonify(answer=None)
+    # else:
+    #     return jsonify(answer=None)
 
 @app.route('/ner/parse/search', methods=['POST'])
 def entry_point():
