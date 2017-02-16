@@ -41,10 +41,10 @@ def isIntegrity(original_text, category, entity):
     final_text = "".join(du.tokenizer_tpp(tu.removeSamples(category + "".join(entity), core), core._TTP_WORD_SPLIT))
     original_text = "".join(du.tokenizer_tpp(tu.removeSamples(original_text, core), core._TTP_WORD_SPLIT))
 
-    if not original_text == final_text:
-        print("\n__________________________Integrity False__________________________")
-        print(original_text)
-        print(final_text)
+    # if not original_text == final_text:
+    #     print("\n__________________________Integrity False__________________________")
+    #     print(original_text)
+    #     print(final_text)
 
     return original_text == final_text
 
@@ -71,8 +71,8 @@ def extractQueryData(input_data, text_cell_id):
     category = ""
     category_cell_id = -1
 
-    print ("_______________________Splitted text_______________________________________")
-    [print("[]",x.strip(),"[len]",len(x.strip())) for x in tableRow]
+    # print ("_______________________Splitted text_______________________________________")
+    # [print("[]",x.strip(),"[len]",len(x.strip())) for x in tableRow]
 
     for i,cat in enumerate(tableRow):
         if nerdb.isInputExist(nerdb.category,cat):
@@ -123,7 +123,7 @@ def prepareForSearch(input_data, text_cell_id):
         category_cell_id = -1
         row = []
         exist_text = text
-    print ("[user exist category]",use_exist_category,exist_category)
+    # print ("[user exist category]",use_exist_category,exist_category)
     return exist_category,text,use_exist_category,category_cell_id,row,exist_text
 
 def findCategory(category,exist_category,entity):
@@ -149,6 +149,21 @@ def findCategory(category,exist_category,entity):
 
     return category,exist_category,use_exist_category,entity
 
+def printAnswerResult(entity,category):
+    print("[category]", category)
+    # print("________________________________________________________answered________________________________________________________")
+    # print("[entity]")
+    # for ent in entity:
+    #     if len(ent["answer"])>0:
+    #         print ("[]",ent)
+    # print("[/entity]")
+    print("________________________________________________________not answered________________________________________________________")
+    print("[entity]")
+    for ent in entity:
+        if len(ent["answer"]) == 0:
+            print("[]", ent["entity"])
+    print("[/entity]")
+
 def parse_search(text,exist_category,use_exist_category=False):
     category, entity = ner.parse(text,core)
 
@@ -156,18 +171,12 @@ def parse_search(text,exist_category,use_exist_category=False):
 
     if (isResolved(checkFullEntity)):
         return checkFullEntity, exist_category
-    else:
-        print("_____________________________PARSE SEARCH________________________________")
-        print("[use_exist_category]", use_exist_category)
-        print("[exist_category]", exist_category)
-        print("[text]", text)
-        print("[ner category]", category)
-        print("[ner entity]")
-        [print("[]", x) for x in entity]
-        print("[/ner entity]")
-
-        print("_____________________________TEST SEARCH ENTITY________________________________")
-        print(checkFullEntity)
+    # else:
+    #     print("_____________________________PARSE SEARCH________________________________")
+    #     print("[use_exist_category]", use_exist_category)
+    #     print("[exist_category]", exist_category)
+    #     print("[text]", text)
+    #     printAnswerResult(checkFullEntity, category)
 
     if not use_exist_category:
         category, exist_category, use_exist_category, entity = findCategory(category,exist_category,entity)
@@ -228,8 +237,6 @@ def parse_search(text,exist_category,use_exist_category=False):
                 category = exist_category
             print ("var 5")
 
-
-
     else:
         print ("var 6")
         if len(entity) > 0:
@@ -239,142 +246,139 @@ def parse_search(text,exist_category,use_exist_category=False):
     if len(entity) > 0 and len(entity[0].strip()) == 0:
             entity = entity[1:]
 
-    print("________________________________________________________after use exist________________________________________________________")
-    print("[ner exist category]", category)
-    print("[ner exist entity]")
-    [print("[]", x) for x in entity]
-    print("[/ner exist entity]")
-
     entity = nerdb.search(category, entity)
 
+    # print("________________________________________________________after use exist________________________________________________________")
+    # printAnswerResult(entity,category)
+
     return entity, category
+
+def secondTryToResolve(entity,category,use_exist_category):
+    print("______________________________Second try to resolve_____________________________")
+
+    newText = ""
+    newEntity = []
+    lastEnd = 0
+    lastStart = -1
+
+    for i, item in enumerate(entity):
+        if len(item["answer"]) == 0:
+            if lastStart == -1: lastStart = i
+            newText += " " + item["entity"]
+        elif len(newText) > 0:
+            _entity = nerdb.search(category, [newText], core)
+            resolved = isResolved(_entity)
+
+            _entity2, _category2 = parse_search(newText, category, use_exist_category)
+            resolved2 = isResolved(_entity2)
+
+            if resolved2:
+                newText = ""
+                newEntity += entity[lastEnd:lastStart] + _entity2
+                lastEnd = i + 1
+                lastStart = -1
+            elif resolved:
+                newText = ""
+                newEntity += entity[lastEnd:lastStart] + _entity
+                lastEnd = i + 1
+                lastStart = -1
+            else:
+                _entity, _category = parse_search(category + " " + newText, category, use_exist_category)
+
+                print("-----------------------------------------------")
+                print("[parsed second category]", _category)
+                print("[parsed second text]")
+                for x in _entity:
+                    print("--------------------------------")
+                    print("[Answer second]", x["answer"])
+                    print("[Entity second]", x["entity"])
+                print("[/parsed second text]")
+
+                _resolved = isResolved(_entity)
+                _integrity = isIntegrity(newText, "", [x["entity"] for x in _entity])
+
+                newText = ""
+
+                print("\n[resolved second]", _resolved)
+                print("[integrity second]", _integrity)
+
+                if _integrity and _resolved:
+                    print("[second try sucessfull]", i)
+                    newEntity += entity[lastEnd:lastStart] + _entity
+                    lastEnd = i + 1
+                    lastStart = -1
+
+                    print("[current new entity]")
+                    for i, item in enumerate(newEntity):
+                        print(i, item["entity"])
+                else:
+                    lastStart = -1
+
+    if len(newText) > 0:
+        _entity = nerdb.search(category, [newText], core)
+        resolved = isResolved(_entity)
+
+        _entity2, _category2 = parse_search(newText, category, use_exist_category)
+        resolved2 = isResolved(_entity2)
+
+        if resolved2:
+            newEntity += entity[lastEnd:lastStart] + _entity2
+            entity = newEntity
+        elif resolved:
+            newEntity += entity[lastEnd:lastStart] + _entity
+            entity = newEntity
+        else:
+            _entity, _category = parse_search(category + " " + newText, category, use_exist_category)
+
+            print("-----------------------------------------------")
+            print("[parsed final category]", _category)
+            print("[parsed final text]")
+            for x in _entity:
+                print("--------------------------------")
+                print("[Answer final]", x["answer"])
+                print("[Entity final]", x["entity"])
+            print("[/parsed final text]")
+
+            _resolved = isResolved(_entity)
+            _integrity = isIntegrity(newText, "", [x["entity"] for x in _entity])
+
+            print("\n[resolved final]", _resolved)
+            print("[integrity final]", _integrity)
+
+            if _integrity and _resolved:
+                print("[second try sucessfull]", i)
+                newEntity += entity[lastEnd:lastStart] + _entity
+
+                print("[current new entity]")
+                for i, item in enumerate(newEntity):
+                    print(i, item["entity"])
+
+                entity = newEntity
+
+    elif len(newEntity) > 0:
+        newEntity += entity[lastEnd - 1:len(entity)]
+        entity = newEntity
+
+    # for i, item in enumerate(entity):
+    #     print(i, item["entity"])
+    #     print(" - ", item["answer"])
+
+    return entity
 
 def ner_parse_search(exist_category, exist_text, use_exist_category,category_cell_id, row, cell_text):
     check_text = exist_text if use_exist_category else exist_category + exist_text
 
-    print("________________________Ner Parse________________________________")
     try:
         entity, category = parse_search(exist_text,exist_category,use_exist_category)
 
         resolved = isResolved(entity)
         integrity = isIntegrity(check_text, category, [x["entity"] for x in entity])
 
-        # if not resolved or not integrity:
-        #     print ("\n[______________________________Firts search results__________________________")
-        #     print("[resolved]", resolved)
-        #     print("[integrity]", integrity)
+        # if not resolved and integrity:
+        if not resolved:
+            entity = secondTryToResolve(entity,category,use_exist_category)
 
-        if not resolved and integrity:
-            print("______________________________Second try to resolve_____________________________")
-
-            newText = ""
-            newEntity = []
-            lastEnd = 0
-            lastStart = -1
-
-            for i, item in enumerate(entity):
-                if len(item["answer"]) == 0:
-                    if lastStart==-1: lastStart=i
-                    newText+=" " +item["entity"]
-                elif len(newText)>0:
-                    _entity = nerdb.search(category, [newText], core)
-                    resolved = isResolved(_entity)
-
-                    _entity2, _category2 = parse_search(newText, category, use_exist_category)
-                    resolved2 = isResolved(_entity2)
-
-                    if resolved2:
-                        newText = ""
-                        newEntity += entity[lastEnd:lastStart] + _entity2
-                        lastEnd = i + 1
-                        lastStart = -1
-                    elif resolved:
-                        newText = ""
-                        newEntity += entity[lastEnd:lastStart] + _entity
-                        lastEnd = i + 1
-                        lastStart = -1
-                    else:
-                        _entity, _category = parse_search(category+" "+newText, category, use_exist_category)
-
-                        print("-----------------------------------------------")
-                        print("[parsed second category]", _category)
-                        print("[parsed second text]")
-                        for x in _entity:
-                            print("--------------------------------")
-                            print("[Answer second]", x["answer"])
-                            print("[Entity second]", x["entity"])
-                        print("[/parsed second text]")
-
-                        _resolved = isResolved(_entity)
-                        _integrity = isIntegrity(newText, "", [x["entity"] for x in _entity])
-
-                        newText = ""
-
-                        print("\n[resolved second]", _resolved)
-                        print("[integrity second]", _integrity)
-
-                        if _integrity and _resolved:
-                            print ("[second try sucessfull]",i)
-                            newEntity += entity[lastEnd:lastStart] +_entity
-                            lastEnd = i+1
-                            lastStart = -1
-
-                            print ("[current new entity]")
-                            for i, item in enumerate(newEntity):
-                                print(i, item["entity"])
-                        else:
-                            lastStart =-1
-
-            if len(newText)>0:
-                _entity = nerdb.search(category, [newText], core)
-                resolved = isResolved(_entity)
-
-                _entity2, _category2 = parse_search(newText, category, use_exist_category)
-                resolved2 = isResolved(_entity2)
-
-                if resolved2:
-                    newEntity += entity[lastEnd:lastStart] + _entity2
-                    entity = newEntity
-                elif resolved:
-                    newEntity += entity[lastEnd:lastStart] + _entity
-                    entity = newEntity
-                else:
-                    _entity, _category = parse_search(category+" "+newText, category, use_exist_category)
-
-                    print("-----------------------------------------------")
-                    print("[parsed final category]", _category)
-                    print("[parsed final text]")
-                    for x in _entity:
-                        print("--------------------------------")
-                        print("[Answer final]", x["answer"])
-                        print("[Entity final]", x["entity"])
-                    print("[/parsed final text]")
-
-                    _resolved = isResolved(_entity)
-                    _integrity = isIntegrity(newText, "", [x["entity"] for x in _entity])
-
-                    print("\n[resolved final]", _resolved)
-                    print("[integrity final]", _integrity)
-
-                    if _integrity and _resolved:
-                        print("[second try sucessfull]", i)
-                        newEntity += entity[lastEnd:lastStart] + _entity
-
-                        print("[current new entity]")
-                        for i, item in enumerate(newEntity):
-                            print(i, item["entity"])
-
-                        entity = newEntity
-
-            elif len(newEntity) > 0:
-                newEntity += entity[lastEnd-1:len(entity)]
-                entity = newEntity
-
-            for i,item in enumerate(entity):
-                print (i,item["entity"])
-
-        print ("_______________________________Final check__________________________________")
-
+        # print ("_______________________________Final check__________________________________")
         resolved = isResolved(entity)
         integrity = isIntegrity(check_text, category, [x["entity"] for x in entity])
 
@@ -405,10 +409,8 @@ def entry_point():
         if (isCategoryInBase):
             entity = nerdb.search(category, [cell_text], False)
             resolved = isResolved(entity)
+
             if not resolved:
-                print("________________________________________________________")
-                print("Try find failed")
-                print(entity)
                 return ner_parse_search(category, text, use_category, category_cell_id, row, cell_text)
 
             integrity = isIntegrity(text, category, [x["entity"] for x in entity])
