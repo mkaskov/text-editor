@@ -162,17 +162,6 @@ def setGlobalCore(core_):
     global core
     core = core_
 
-def check_integrity(orig, cat, ent):
-    final = "".join(du.tokenizer_tpp(tu.removeSamples(cat + "".join(ent), core),core._TTP_WORD_SPLIT))
-    orig = "".join(du.tokenizer_tpp(tu.removeSamples(orig, core),core._TTP_WORD_SPLIT))
-
-    if not orig == final:
-        print("\n----------------Integrity False----------------------------")
-        print(orig)
-        print(final)
-
-    return orig == final
-
 def clearSingleDots(entity):
     retValue = []
     lastI = -1
