@@ -156,17 +156,11 @@ def findCategory(category,exist_category,entity):
 
 def printAnswerResult(entity,category):
     print("[category]", category)
+    print("[entity]")
     print("________________________________________________________answered________________________________________________________")
-    print("[entity]")
-    for ent in entity:
-        if len(ent["answer"])>0:
-            print ("[]",ent)
-    print("[/entity]")
+    [print ("[]",x) for x in entity if len(x["answer"])>0]
     print("________________________________________________________not answered________________________________________________________")
-    print("[entity]")
-    for ent in entity:
-        if len(ent["answer"]) == 0:
-            print("[]", ent["entity"])
+    [print("[]", x) for x in entity if len(x["answer"]) == 0]
     print("[/entity]")
 
 def parse_search(text,exist_category,use_exist_category=False):
@@ -175,81 +169,77 @@ def parse_search(text,exist_category,use_exist_category=False):
     if(use_exist_category):
         entity = [category]  + entity
 
-    checkFullEntity = nerdb.search(exist_category, entity)
+    resolvedEntity = nerdb.search(exist_category, entity)
 
-    if (isResolved(checkFullEntity)):
-        return checkFullEntity, exist_category
-    else:
+    if not isResolved(resolvedEntity):
         print("_____________________________PARSE SEARCH________________________________")
         print("[use_exist_category]", use_exist_category)
         print("[exist_category]", exist_category)
         print("[text]", text)
-        printAnswerResult(checkFullEntity, category)
+        printAnswerResult(resolvedEntity, category)
 
-    entity = nerdb.search(exist_category, entity)
-    return entity, exist_category
+    return resolvedEntity, exist_category
 
 def simpleOnPairSearch(entityArr,category):
-    for i,ent in enumerate(entityArr):
-        if i+1<len(entityArr) and len(entityArr[i+1]['answer'])==0:
-            try_to_find_full = nerdb.search(category, [entityArr[i]['entity'] + " " + entityArr[i + 1]['entity']], core)
-            if(len(try_to_find_full[0]['answer'])>0):
-                entityArr[i]['entity'] = entityArr[i]['entity'] + " " + entityArr[i + 1]['entity']
-                entityArr[i]['answer'] = try_to_find_full[0]['answer']
+    for i,entity in enumerate(entityArr):
+        if len(entity['answer'])==0 and i+1<len(entityArr) and len(entityArr[i+1]['answer'])==0:
+            single_resolve = nerdb.search(category, [entity['entity'] + " " + entityArr[i + 1]['entity']], core)
+            if(len(single_resolve[0]['answer'])>0):
+                entityArr[i]['entity'] = entity['entity'] + " " + entityArr[i + 1]['entity']
+                entityArr[i]['answer'] = single_resolve[0]['answer']
                 entityArr[i + 1]['entity'] = ''
 
-    return clearFromEmpty(entityArr)
+    return [x for x in entityArr if len(x['entity'])>0]
 
-def clearFromEmpty(entity):
-    return [x for x in entity if len(x['entity'])>0]
-
-def extractNotResolved(entityArr,category,use_exist_category,refactorArr):
+def extractNotResolved(entityArr, category, use_exist_category, returnArr):
     if len(entityArr) > 0:
-        temp_text = ''
+        search_text = ''
 
         for item in entityArr:
-            temp_text += " " + item['entity']
+            search_text += " " + item['entity']
 
-        temp_resolve_full = nerdb.search(category, [temp_text], core)
-        if(len(temp_resolve_full[0]['answer'])>0):
-            refactorArr.append({'entity': temp_resolve_full[0], 'notresolved': []})
+        finalEntity = entityArr
+
+        single_resolve = nerdb.search(category, [search_text], core)
+
+        if(len(single_resolve[0]['answer'])>0):
+            finalEntity = single_resolve
         else:
-            temp_resolve,_ = parse_search(temp_text, category, use_exist_category)
+            multi_resolve,_ = parse_search(search_text, category, use_exist_category)
 
-            if(isResolvedSimple(temp_resolve)):
-                for x in temp_resolve:
-                    refactorArr.append({'entity':x,'notresolved':[]})
-            else:
-                for item in entityArr:
-                    refactorArr.append({'entity':item, 'notresolved': []})
+            if(isResolvedSimple(multi_resolve)):
+                finalEntity = multi_resolve
 
-    return refactorArr
+        for item in finalEntity:
+            returnArr.append({'entity': item, 'notresolved': []})
+
+    return returnArr
 
 def hardSecondParse(entityArr,category,use_exist_category):
-    refactorArr = [{'entity': None, 'notresolved': []}]
+    arr = [{'entity': None, 'notresolved': []}]
 
     for entity in entityArr:
         if len(entity['answer']) > 0:
-            refactorArr = extractNotResolved(refactorArr[-1]['notresolved'], category, use_exist_category, refactorArr)
-            refactorArr.append({'entity': entity, 'notresolved': []})
+            arr = extractNotResolved(arr[-1]['notresolved'], category, use_exist_category, arr)
+            arr.append({'entity': entity, 'notresolved': []})
         else:
-            if refactorArr[-1]['entity']:
-                refactorArr.append({'entity': None, 'notresolved': []})
-            refactorArr[-1]['notresolved'].append(entity)
+            if arr[-1]['entity']:
+                arr.append({'entity': None, 'notresolved': []})
+            arr[-1]['notresolved'].append(entity)
 
-    refactorArr = extractNotResolved(refactorArr[-1]['notresolved'], category, use_exist_category, refactorArr)
-    return [x['entity'] for x in refactorArr if x['entity']]
+    arr = extractNotResolved(arr[-1]['notresolved'], category, use_exist_category, arr)
+    return [x['entity'] for x in arr if x['entity']]
 
-def secondTryToResolve(entityArr, category, use_exist_category):
+def secondTryToResolve(entity, category, use_exist_category):
     print("______________________________Second try to resolve_____________________________")
 
-    entityArr = simpleOnPairSearch(entityArr,category)
-    entityArr = hardSecondParse(entityArr,category,use_exist_category)
+    entity = simpleOnPairSearch(entity, category)
+    entity = hardSecondParse(entity, category, use_exist_category)
 
     print("______________________________Not resolved...._____________________________")
-    [print(x) for x in entityArr if len(x['answer'])==0]
+    [print(x) for x in entity if len(x['answer']) == 0]
 
-    return entityArr
+    return entity
 
 def ner_parse_search(exist_category, exist_text, use_exist_category):
     check_text = exist_text if use_exist_category else exist_category + exist_text
