@@ -114,10 +114,9 @@ def getWordState(id,outputs,vocab,word):
     else: return 'default'
 
 def getRaw(text, core):
-    resultText = " ".join([x for x in du.tokenizer_tpp(text, core._TTP_WORD_SPLIT) if x not in dotsArrEntity])
-    resultText = prepareSup(resultText)
-    resultText = re.sub("\s+","",resultText)
-    return resultText
+    text = prepareSuperscript(text)
+    text =  "".join([x for x in du.tokenizer_tpp(text, core._TTP_WORD_SPLIT) if x not in dotsArrEntity])
+    return prepareCelsius(text)
 
 def getSplitted(text,core):
     return " ".join([x for x in du.tokenizer_tpp(text, core._TTP_WORD_SPLIT)])
@@ -130,20 +129,22 @@ def removeSamples(text,core):
         text = re.sub(sample+"\s(\d\s)+\d+|"+sample+"\s(\d\s)+|"+sample+"\s(\d)+", " ", text)
     return re.sub("[\s]+", " ", text)
 
-def prepareSup(text):
+def prepareSuperscript(text):
     supSymbols = ['⁰','¹','²','³','⁴','⁵','⁶','⁷','⁸','⁹']
     supWord = ['/м','/мм',"/см","/дм"]
     supWord_v2 = ['м','мм',"см","дм"]
 
-    text = re.sub("\s[0oOоО]С", "°С", text)
-    text = re.sub("\s[0oOоО]C", "°C", text)
+    text = re.sub("\s[0oOоО][СC]", "°C", text)
+    text = re.sub("\)\s?[0oOоО][СC]", ") °C", text)
 
     for i in range(10):
         for word in supWord:
             text = re.sub(word+str(i), word+supSymbols[i], text)
         for word in supWord_v2:
             text = re.sub("\s"+word + str(i), word + supSymbols[i], text)
-        text = re.sub(str(i)+"[0oOоО]С", str(i)+"°С", text)
-        text = re.sub(str(i)+"[0oOоО]C", str(i)+"°C", text)
-
+        text = re.sub(str(i)+"[0oOоО][СC]", str(i)+"°C", text)
+        text = re.sub('\*\s?1\s?0\s?-\s?' + str(i), '*10-' + supSymbols[i], text)
     return text
+
+def prepareCelsius(text):
+    return re.sub("°[СC]", "°C", text)
