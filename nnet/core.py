@@ -115,6 +115,8 @@ class Core(object):
 
         print ("RegEx patter: ", _TTP_WORD_SPLIT.pattern)
 
+        print ("word window size: ", app_options['window_size'])
+
         print ("Learning rate: ", FLAGS.learning_rate)
 
         print("learning_rate_decay_factor: ", FLAGS.learning_rate_decay_factor)

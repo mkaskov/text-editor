@@ -240,9 +240,7 @@ def clean_tags(category,entity):
 
     return category,entity
 
-def parse_tags(text):
-    window = 30
-
+def parse_tags(text,window):
     tokens = du.tokenizer_tpp(text,core._TTP_WORD_SPLIT)
     clusters = int(len(tokens) / window)
     sentecesEntity = split_text(tokens, clusters, window)
@@ -253,8 +251,8 @@ def parse_tags(text):
 
     return category,entity
 
-def parse(text,cleanTags=True):
-    category, entity = parse_tags(text)
+def parse(text,window,cleanTags=True):
+    category, entity = parse_tags(text,window)
     entity = clearSingleDots(entity)
     entity = cleanBeginigDots(entity)
 

@@ -39,15 +39,13 @@ class NerDB(object):
         self.url_database = url_database
 
     def reConnectToDb(self):
+        self.category = "category"
+        self.input = "input"
+        self.output = "output"
+
         if self.connectToDdBool:
-            self.category = "category"
-            self.input = "input"
-            self.output = "output"
             self.connectToDB('postgresql://'+self.url_database)
         else:
-            self.category = "category"
-            self.input = "in"
-            self.output = "out"
             self.connectToExel(self.url_database)
 
         self.prepareBase()
@@ -66,6 +64,10 @@ class NerDB(object):
         self.base[self.category] = self.base[self.category].apply(lambda x: tu.getRaw( tu.removeSamples(x,  self.core).strip(), self.core))
         self.base[self.output] = self.base[self.output].apply(lambda x: tu.prepareSuperscript(x))
 
+        # print ("self.base",len(self.base))
+        # temp_baze = self.base.drop_duplicates(subset=['category','input'])
+        # print("temp_baze",len(temp_baze))
+
     def connectToExel(self, url_database):
         self.base = pd.read_excel(url_database, sheetname=0, header=None, names=[self.category, self.input, self.output])
 
@@ -79,9 +81,6 @@ class NerDB(object):
             self.base = base
         except ProgrammingError:
             self.initEmptyDB()
-
-    def getRaw(self,text):
-        return "".join([x for x in du.tokenizer_tpp(text, self._TTP_WORD_SPLIT) if x not in tu.dotsArrEntity])
 
     def searchBaseInField(self,type, text):
         return self.base.loc[self.base[type] == text]

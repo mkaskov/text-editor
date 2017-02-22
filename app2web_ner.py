@@ -31,6 +31,7 @@ CORS(app)
 
 global core
 global nerdb
+global app_options
 
 def isResolved(entity):
     for item in entity:
@@ -164,7 +165,7 @@ def printAnswerResult(entity,category):
     print("[/entity]")
 
 def parse_search(text,exist_category,use_exist_category=False):
-    category, entity = ner.parse(text,core)
+    category, entity = ner.parse(text,app_options['window_size'])
 
     if(use_exist_category):
         entity = [category]  + entity
@@ -304,7 +305,7 @@ def entry_point():
 def parse_search_tag():
     text = request.json['query']
 
-    _category, _entity = ner.parse(text,core,cleanTags=False)
+    _category, _entity = ner.parse(text,app_options['window_size'],cleanTags=False)
     category, entity = ner.clean_tags(_category, _entity)
     category = category[0] if len(category) > 0 else ""
     integrity = isIntegrity(text, category, entity)
@@ -319,14 +320,14 @@ def parse_search_tag():
 @app.route('/ner/parse', methods=['POST'])
 def parse():
     text = request.json['query']
-    category, entity = ner.parse(text,core)
+    category, entity = ner.parse(text,app_options['window_size'])
     integrity = isIntegrity(text, category, entity)
     return jsonify(_integrity=integrity,entity=entity, category=category)
 
 @app.route('/ner/parse/tag', methods=['POST'])
 def parse_tag():
     text = request.json['query']
-    category, entity = ner.parse_tags(text,core)
+    category, entity = ner.parse_tags(text,app_options['window_size'])
     category = category[0] if len(category)>0 else ""
     return jsonify(entity=entity, category=category)
 

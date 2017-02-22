@@ -74,7 +74,9 @@ def getParams():
         "web":False,
         "reduce_gpu":False,
         "forward_only":False,
-        "connect_to_db":False
+        "connect_to_db":False,
+        'url_database':'None',
+        'window_size':30
     }
 
     # read data from model.ini, if file exist and app flags
@@ -101,6 +103,7 @@ def getParams():
             if "buckets" in params.keys(): _buckets = params["buckets"]
             if "regex" in params.keys():  _TTP_WORD_SPLIT = re.compile(params["regex"])
             if "checkpoints_directory" in params.keys(): value_train_dir = data_dir; value_train_dir+=params["checkpoints_directory"]
+            if "window_size" in params.keys(): app_options['window_size']= params["window_size"]
 
     #set value to TF flags
     tf.app.flags.DEFINE_float("learning_rate", value_learning_rate, "Learning rate.")

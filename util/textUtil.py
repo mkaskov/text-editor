@@ -62,8 +62,6 @@ def prepare_decode(t): return t.replace('[newline]', '').replace('[threedot]', '
 
 def decode_from_java(s): return urllib.parse.unquote(s)
 
-def printArr(ar): [print(e) for e in ar]
-
 def removeSpaces(t): return re.sub("[\s\xA0]+", " ", t).strip()
 
 def buildRetValue(outputs,vocab):
