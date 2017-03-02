@@ -9,7 +9,6 @@ import urllib.parse
 import re
 from .switch import switch
 from io import StringIO
-from nnet import data_utils as du
 
 afterSpace = ['.', ',',':',')','%']
 beforSpace = ['°','(']
@@ -113,11 +112,16 @@ def getWordState(id,outputs,vocab,word):
 
 def getRaw(text, core):
     text = prepareSuperscript(text)
-    text =  "".join([x for x in du.tokenizer_tpp(text, core._TTP_WORD_SPLIT) if x not in dotsArrEntity])
+    text =  "".join([x for x in tokenizer_tpp(text, core._TTP_WORD_SPLIT) if x not in dotsArrEntity])
+    return prepareCelsius(text)
+
+def getRawSpace(text, core):
+    text = prepareSuperscript(text)
+    text =  " ".join([x for x in tokenizer_tpp(text, core._TTP_WORD_SPLIT) if x not in dotsArrEntity])
     return prepareCelsius(text)
 
 def getSplitted(text,core):
-    return " ".join([x for x in du.tokenizer_tpp(text, core._TTP_WORD_SPLIT)])
+    return " ".join([x for x in tokenizer_tpp(text, core._TTP_WORD_SPLIT)])
 
 def removeSamples(text,core):
     for sample in excludeSamples:
@@ -146,3 +150,21 @@ def prepareSuperscript(text):
 
 def prepareCelsius(text):
     return re.sub("°[СC]", "°C", text)
+
+
+
+# Регулярные выражения, используемые для создания токенов (tokenize).
+_WORD_SPLIT = re.compile("([,.][ ]+|[!?\"':;)(])") # v2 (not tested)
+_DIGIT_RE = re.compile(r"\d")
+
+_TTP_WORD_SPLIT = None
+
+def basic_tokenizer(sentence): #"""Very basic tokenizer: split the sentence into a list of tokens."""
+  words = []
+  for space_separated_fragment in sentence.strip().split():
+    words.extend(re.split(_WORD_SPLIT, space_separated_fragment))
+  return [w for w in words if w]
+
+def tokenizer_tpp(t, _tokens):
+  words = re.findall(_tokens, t)
+  return [w for w in words if w]

@@ -44,8 +44,8 @@ def isResolvedSimple(entity):
     return False
 
 def isIntegrity(original_text, category, entity):
-    final_text = "".join(du.tokenizer_tpp(tu.removeSamples(category + "".join(entity), core), core._TTP_WORD_SPLIT))
-    original_text = "".join(du.tokenizer_tpp(tu.removeSamples(original_text, core), core._TTP_WORD_SPLIT))
+    final_text = "".join(tu.tokenizer_tpp(tu.removeSamples(category + "".join(entity), core), core._TTP_WORD_SPLIT))
+    original_text = "".join(tu.tokenizer_tpp(tu.removeSamples(original_text, core), core._TTP_WORD_SPLIT))
 
     # if not original_text == final_text:
     #     print("\n__________________________Integrity False__________________________")
@@ -94,9 +94,9 @@ def extractQueryData(input_data, text_cell_id):
 
 def appendPunktMars(entity):
     for x in entity:
-        tokensEnt = du.tokenizer_tpp(x["entity"], core._TTP_WORD_SPLIT)
+        tokensEnt = tu.tokenizer_tpp(x["entity"], core._TTP_WORD_SPLIT)
         for y,answer in enumerate(x["answer"]):
-            tokensAns = du.tokenizer_tpp(answer, core._TTP_WORD_SPLIT)
+            tokensAns = tu.tokenizer_tpp(answer, core._TTP_WORD_SPLIT)
 
             if len(tokensAns)>0 and len(tokensEnt)>0:
                 dotEntEnd = tokensEnt[-1]

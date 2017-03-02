@@ -37,7 +37,7 @@ def connectToDB():
     return base
 
 def getRaw(text):
-    return "".join([x for x in du.tokenizer_tpp(text, _TTP_WORD_SPLIT) if x not in tu.dotsArrEntity])
+    return "".join([x for x in tu.tokenizer_tpp(text, _TTP_WORD_SPLIT) if x not in tu.dotsArrEntity])
 
 base = connectToDB()
 maxLenChar = base[input].map(lambda x: len(x)).max()

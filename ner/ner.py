@@ -170,7 +170,7 @@ def clearSingleDots(entity):
             if i+1<len(entity):
                 next = entity[i+1][0]
                 currentE = current[0]
-                nextTokens = du.tokenizer_tpp(next, core._TTP_WORD_SPLIT)
+                nextTokens = tu.tokenizer_tpp(next, core._TTP_WORD_SPLIT)
                 if len(nextTokens)==1:
                     if nextTokens[0] in dotsArr:
                         retValue.append([currentE+" "+next,current[1]+entity[i+1][1]])
@@ -184,7 +184,7 @@ def clearSingleDots(entity):
 def cleanBeginigDots(entity):
     for i, current in enumerate(entity):
         if i-1>=0:
-           tokens = du.tokenizer_tpp(current[0], core._TTP_WORD_SPLIT)
+           tokens = tu.tokenizer_tpp(current[0], core._TTP_WORD_SPLIT)
            tokensNer =  current[1]
 
            if tokens[0] in dotsArr:
@@ -203,7 +203,7 @@ def recognize_entity(sentecesEntity):
     for i, sent in enumerate(sentecesEntity):
         outputs, rev_out_vocab = core.recognition(sent,printStats=False)
 
-        sentTokens = du.tokenizer_tpp(sent, core._TTP_WORD_SPLIT)
+        sentTokens = tu.tokenizer_tpp(sent, core._TTP_WORD_SPLIT)
 
         if i == 0:
             category = getEntitys(sentTokens, outputs, rev_out_vocab, '[K]', '[_K_]', '[/K]')
@@ -241,7 +241,7 @@ def clean_tags(category,entity):
     return category,entity
 
 def parse_tags(text,window):
-    tokens = du.tokenizer_tpp(text,core._TTP_WORD_SPLIT)
+    tokens = tu.tokenizer_tpp(text,core._TTP_WORD_SPLIT)
     clusters = int(len(tokens) / window)
     sentecesEntity = split_text(tokens, clusters, window)
     entity, category = recognize_entity(sentecesEntity)

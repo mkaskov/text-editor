@@ -11,6 +11,7 @@ import gzip
 import os
 import re
 import tarfile
+from util import textUtil as tu
 
 from six.moves import urllib
 
@@ -30,20 +31,8 @@ EOS_ID = 2
 UNK_ID = 3
 
 # Регулярные выражения, используемые для создания токенов (tokenize).
-_WORD_SPLIT = re.compile("([,.][ ]+|[!?\"':;)(])") # v2 (not tested)
 _DIGIT_RE = re.compile(r"\d")
-
 _TTP_WORD_SPLIT = None
-
-def basic_tokenizer(sentence): #"""Very basic tokenizer: split the sentence into a list of tokens."""
-  words = []
-  for space_separated_fragment in sentence.strip().split():
-    words.extend(re.split(_WORD_SPLIT, space_separated_fragment))
-  return [w for w in words if w]
-
-def tokenizer_tpp(t, _tokens):
-  words = re.findall(_tokens, t)
-  return [w for w in words if w]
 
 def create_vocabulary(vocabulary_path, data_path, max_vocabulary_size,
                       tokenizer=None, normalize_digits=True,ext_TTP_WORD_SPLIT=_TTP_WORD_SPLIT):
@@ -73,7 +62,7 @@ def create_vocabulary(vocabulary_path, data_path, max_vocabulary_size,
         counter += 1
         if counter % 100000 == 0:
           print("  processing line %d" % counter)
-        tokens = tokenizer(line) if tokenizer else tokenizer_tpp(line,ext_TTP_WORD_SPLIT)
+        tokens = tokenizer(line) if tokenizer else tu.tokenizer_tpp(line,ext_TTP_WORD_SPLIT)
         for w in tokens:
           word = re.sub(_DIGIT_RE, "0", w) if normalize_digits else w
           if word in vocab:
@@ -139,9 +128,9 @@ def sentence_to_token_ids(sentence, vocabulary,
   """
   # если мы передали какую то свою функцию
   if tokenizer:
-    words = basic_tokenizer(sentence)
+    words = tu.basic_tokenizer(sentence)
   else:
-    words = tokenizer_tpp(sentence,ext_TTP_WORD_SPLIT)
+    words = tu.tokenizer_tpp(sentence,ext_TTP_WORD_SPLIT)
   if not normalize_digits:
     return [vocabulary.get(w, UNK_ID) for w in words]
   # Normalize digits by 0 before looking words up in the vocabulary.
