@@ -49,7 +49,7 @@ class GraphDB(object):
         base = base.loc[base[self.category] == category]
 
         # base[self.input] = base[self.input].apply(lambda x: x.strip().lower().rstrip(punctuation))
-        base[self.input] = base[self.input].apply(lambda x: re.sub("[\s]", " ", x).strip().lower())
+        base[self.input] = base[self.input].apply(lambda x: tu.prepreGraphText(x))
         # base[self.input] = base[self.input].apply(lambda x: re.sub("[\s]", " ", x).strip().lower().rstrip(self.simpPunctuation).strip())
         base = base.drop_duplicates(subset=[self.category,self.input])
 
@@ -65,12 +65,11 @@ class GraphDB(object):
         base = base.loc[base[self.category] == category]
 
         # base[self.input] = base[self.input].apply(lambda x: x.strip().lower().rstrip(punctuation))
+        # base[self.input] = base[self.input].apply(lambda x: re.sub("[\s]", " ", x).strip().lower().rstrip(self.simpPunctuation).strip())
         # base[self.output] = base[self.output].apply(lambda x: x.strip().rstrip(punctuation))
 
-        base[self.input] = base[self.input].apply(lambda x: re.sub("[\s]", " ", x).strip().lower())
-        # base[self.input] = base[self.input].apply(lambda x: re.sub("[\s]", " ", x).strip().lower().rstrip(self.simpPunctuation).strip())
-        base[self.output] = base[self.output].apply(lambda x: x.strip())
-
+        base[self.input] = base[self.input].apply(lambda x: tu.prepreGraphText(x))
+        base[self.output] = base[self.output].apply(lambda x: re.sub("[\s]+"," ",x).strip())
         base = base.drop_duplicates(subset=[self.category,self.input,self.output])
 
         return base

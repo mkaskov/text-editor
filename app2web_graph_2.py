@@ -1,10 +1,11 @@
 import re
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from ner import ner_db as NERDB
 from util import textUtil as tu
 import networkx as nx
 from graph import graph_db as GraphDB
+from string import punctuation
+import re
 
 app = Flask(__name__)
 CORS(app)
@@ -54,7 +55,10 @@ def extractQueryData(request):
     tableRow = re.split(CELL_SPLIT, input_data.strip())
     category = tu.removeSamples(tableRow[text_cell_id-1], core).strip().lower() if text_cell_id >0 else ""
 
-    return category, tableRow[text_cell_id].strip()
+    text = re.sub("[\s]+", " ", tableRow[text_cell_id]).strip()
+    text = re.sub("[\u00ad]+","",text)
+
+    return category, text
 
 def findEntries(category, text):
     base = graphDb.queryByCategory(category)
@@ -108,14 +112,32 @@ def getFindedIndexes(str_len,e_list,delta):
 
     return findedIndexes
 
+def isEmptyEntity(text):
+    curr_test = re.sub("[\s\u00ad]+", "", text)
+    curr_test = [x for x in curr_test if x not in punctuation]
+    return len(curr_test)==0
+
+def updateEntity(curr_text,entity,categoryBase):
+    if len(curr_text)==0:
+        return entity
+
+    if isEmptyEntity(curr_text) and len(entity) > 0:
+        entity[-1]['entity'] = entity[-1]['entity'] + curr_text
+        for index_a, answer in enumerate(entity[-1]['answer']):
+            entity[-1]['answer'][index_a] = entity[-1]['answer'][index_a] + curr_text
+    else:
+        entity += graphDb.search(categoryBase, [curr_text])
+
+    return entity
+
 @app.route('/ner/parse/search', methods=['POST'])
 def parse_search():
     delta = 0.01
 
     category,text = extractQueryData(request)
-    category = re.sub("[\s]", " ", category)
-    text = re.sub("[\s]", " ", text).strip()
-    text_lower = re.sub("[\s]", " ", text).strip().lower()
+
+    text_lower = tu.prepreGraphText(text)
+
     len_text = len(text_lower)
 
     if len(category)>0:
@@ -142,26 +164,27 @@ def parse_search():
             print (finded[x])
             print (indexes[index],edges[x])
 
-            if index > 0 and index < len_text:
-                if edges[indexes[index]][0] != edges[indexes[index - 1]][1]:
-                    curr_text = text[edges[indexes[index - 1]][1]:edges[indexes[index]][0]]
-                    entity += graphDb.search(categoryBase, [curr_text])
+            curr_text = ""
+
+            if index > 0 and index < len_text and edges[indexes[index]][0] != edges[indexes[index - 1]][1]:
+                curr_text = text[edges[indexes[index - 1]][1]:edges[indexes[index]][0]]
 
             elif index == 0 and edges[x][0] > 0:
                 curr_text = text[0:edges[x][0]]
-                entity += graphDb.search(categoryBase, [curr_text])
 
             elif index + 1 == len_text:
                 curr_text = text[edges[indexes[-1]][1] + 1:len_text]
-                entity += graphDb.search(categoryBase, [curr_text])
 
+            entity = updateEntity(curr_text, entity, categoryBase)
             entity += graphDb.search(categoryBase, [finded[x]['item']])
 
         if len(indexes)>1 and edges[indexes[-1]][1]+1<=len_text:
-            entity += graphDb.search(categoryBase, [text[edges[indexes[-1]][1]:len_text]])
+            curr_text = text[edges[indexes[-1]][1]:len_text]
+            entity = updateEntity(curr_text, entity, categoryBase)
 
         if len(indexes) == 1 and edges[indexes[0]][1] != len_text:
-            entity += graphDb.search(categoryBase, [text[edges[indexes[0]][1]:len_text]])
+            curr_text = text[edges[indexes[0]][1]:len_text]
+            entity = updateEntity(curr_text, entity, categoryBase)
 
         if len(indexes) == 0:
             entity += graphDb.search(categoryBase, [text_lower])

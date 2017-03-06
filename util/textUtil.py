@@ -129,7 +129,8 @@ def removeSamples(text,core):
         text = re.sub(sample, " ", text)
     for sample in ecludeRegexSamples:
         text = re.sub(sample+"\s(\d\s)+\d+|"+sample+"\s(\d\s)+|"+sample+"\s(\d)+", " ", text)
-    return re.sub("[\s]+", " ", text)
+    text = re.sub("[\u00ad]+","",text)
+    return re.sub("[\s]+", " ", text).strip()
 
 def prepareSuperscript(text):
     supSymbols = ['⁰','¹','²','³','⁴','⁵','⁶','⁷','⁸','⁹']
@@ -168,3 +169,9 @@ def basic_tokenizer(sentence): #"""Very basic tokenizer: split the sentence into
 def tokenizer_tpp(t, _tokens):
   words = re.findall(_tokens, t)
   return [w for w in words if w]
+
+
+def prepreGraphText(text):
+    text = re.sub("[\s]+", " ", text).strip().lower()
+    # text = re.sub(",", ".", text)
+    return re.sub("[\u00ad]+","",text)
