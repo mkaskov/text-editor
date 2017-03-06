@@ -6,21 +6,15 @@ import networkx as nx
 from graph import graph_db as GraphDB
 from string import punctuation
 import re
+import docker_prepare
+from ner import ner
+from nnet import initialization, core
 
 app = Flask(__name__)
 CORS(app)
 
-_TTP_WORD_SPLIT = "\[_K_\]|\[_At_\]|\[\|\|\]|\[\/K\]|\[K\]|\[At\]|\[\/At\]|гост\s[\d.]+—?\-?[\d]+|ГОСТ\s[\d.]+—?\-?[\d]+|[а-яА-Я]+\/[а-яА-Я\d]+\.{1}[а-яА-Я\d]+\.{1}|[а-яА-Я]+\/\([^()]+\)|[^\s\d.,!?():;/\\|<>\"\'=–—\-+_*\xA0IV\[\]≥≤~”“_ₒ∙°··\x23«»]+\d?\/[^\s.,!?():;/\\|<>\"\'=–—\-+_*\xA0IV\[\]≥≤~”“_ₒ∙°··\x23«»]+|м{1,2}[\d⁰¹²³⁴⁵⁶⁷⁸⁹]|см[\d⁰¹²³⁴⁵⁶⁷⁸⁹]|дм[\d⁰¹²³⁴⁵⁶⁷⁸⁹]|[a-zA-Zа-яА-ЯёЁ]*[^\s\d.\\!?,:;()\"\'<>%«»±^…–—\-*=/+\xA0@·∙\[\]°ₒ”“·≥≤~_\x23]|[\d()\\!?\'\"<>%,:;±«»^…–—\-*=/+@·∙\[\]°ₒ”“·≥≤~_\x23]|\.{3}|\.{1}"
-url_database='ttpuser:ttppassword@db:5432/ttp'
-
 global core
 global graphDb
-
-class Core(object):
-    global _TTP_WORD_SPLIT
-
-    def __init__(self, _TTP_WORD_SPLIT_STRING):
-        self._TTP_WORD_SPLIT = re.compile(_TTP_WORD_SPLIT_STRING)
 
 def isResolved(entity):
     for item in entity:
@@ -54,6 +48,14 @@ def extractQueryData(request):
     CELL_SPLIT = re.compile("\[\|\|\]")
     tableRow = re.split(CELL_SPLIT, input_data.strip())
     category = tu.removeSamples(tableRow[text_cell_id-1], core).strip().lower() if text_cell_id >0 else ""
+
+    if len(category)==0:
+        _category, _entity = ner.parse(tableRow[text_cell_id].strip(), 30, cleanTags=False)
+
+        if len(_category)>0:
+            _category = tu.removeSamples(_category[0][0], core).strip().lower()
+            if graphDb.isCatExist(_category):
+                category = _category
 
     text = re.sub("[\s]+", " ", tableRow[text_cell_id]).strip()
     text = re.sub("[\u00ad]+","",text)
@@ -213,6 +215,9 @@ def parse_search():
         return jsonify(answer=answer.get_data(as_text=True))
 
 if __name__ == "__main__":
-    core = Core(_TTP_WORD_SPLIT)
-    graphDb = GraphDB.GraphDB(url_database, core)
-    app.run(host='0.0.0.0', port=5003, debug=True, use_reloader=False, threaded=False)
+    FLAGS, _TTP_WORD_SPLIT, _buckets, app_options = initialization.getParams()
+    if app_options["fixdataset"]: docker_prepare.fix_dataset()
+    core = core.Core(FLAGS, _TTP_WORD_SPLIT, _buckets, app_options)
+    ner.setGlobalCore(core)
+    graphDb = GraphDB.GraphDB(app_options["url_database"], core)
+    app.run(host='0.0.0.0', port=FLAGS.port, debug=True, use_reloader=False, threaded=False)

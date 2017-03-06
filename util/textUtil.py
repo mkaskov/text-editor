@@ -9,6 +9,7 @@ import urllib.parse
 import re
 from .switch import switch
 from io import StringIO
+from string import punctuation
 
 afterSpace = ['.', ',',':',')','%']
 beforSpace = ['°','(']
@@ -130,7 +131,7 @@ def removeSamples(text,core):
     for sample in ecludeRegexSamples:
         text = re.sub(sample+"\s(\d\s)+\d+|"+sample+"\s(\d\s)+|"+sample+"\s(\d)+", " ", text)
     text = re.sub("[\u00ad]+","",text)
-    return re.sub("[\s]+", " ", text).strip()
+    return re.sub("[\s]+", " ", text).strip().rstrip(punctuation).strip()
 
 def prepareSuperscript(text):
     supSymbols = ['⁰','¹','²','³','⁴','⁵','⁶','⁷','⁸','⁹']
