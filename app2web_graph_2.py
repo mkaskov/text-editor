@@ -57,8 +57,7 @@ def extractQueryData(request):
             if graphDb.isCatExist(_category):
                 category = _category
 
-    text = re.sub("[\s]+", " ", tableRow[text_cell_id]).strip()
-    text = re.sub("[\u00ad]+","",text)
+    text = tu.regexClean(tableRow[text_cell_id])
 
     return category, text
 
@@ -68,20 +67,11 @@ def findEntries(category, text):
     finded = []
 
     for i, item in base.iterrows():
-        if item['input'] in text:
+        if len(item['input'])>0 and item['input'] in text:
+            _index = text.find(item['input'])
+            finded.append({"pos": _index, "item": item['input']})
 
-            _index = text.find(" "+item['input'])
-            zero_index = text.find(item['input'])
-
-            if len(item['input'])>0:
-                if _index>0:
-                  finded.append({"pos": _index+1, "item": item['input']})
-                elif zero_index == 0:
-                    finded.append({"pos": 0, "item": item['input']})
-
-    finded = sorted(finded, key=lambda find_: (find_['pos'], len(find_['item'])))
-
-    return finded
+    return sorted(finded, key=lambda find_: (find_['pos'], len(find_['item'])))
 
 def getFindedIndexes(str_len,e_list,delta):
     G = nx.Graph()

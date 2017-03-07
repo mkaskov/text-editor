@@ -125,13 +125,15 @@ def getSplitted(text,core):
     return " ".join([x for x in tokenizer_tpp(text, core._TTP_WORD_SPLIT)])
 
 def removeSamples(text,core):
+    text = regexClean(text)
+
     for sample in excludeSamples:
         sample = getSplitted(sample,core)
         text = re.sub(sample, " ", text)
     for sample in ecludeRegexSamples:
         text = re.sub(sample+"\s(\d\s)+\d+|"+sample+"\s(\d\s)+|"+sample+"\s(\d)+", " ", text)
-    text = re.sub("[\u00ad]+","",text)
-    return re.sub("[\s]+", " ", text).strip().rstrip(punctuation).strip()
+
+    return text.rstrip(punctuation).strip()
 
 def prepareSuperscript(text):
     supSymbols = ['⁰','¹','²','³','⁴','⁵','⁶','⁷','⁸','⁹']
@@ -171,8 +173,13 @@ def tokenizer_tpp(t, _tokens):
   words = re.findall(_tokens, t)
   return [w for w in words if w]
 
+def regexClean(text):
+    if isinstance(text, str):
+        text = re.sub("[\u200B\u00AD\uFEFF\u200D\u200C\u2060]+","",text)
+        text = re.sub("[\s\u202F\u2007\u2009\u200A\u00A0]+"," ",text)
+        return text.strip()
+    else:
+        return text
 
 def prepreGraphText(text):
-    text = re.sub("[\s]+", " ", text).strip().lower()
-    # text = re.sub(",", ".", text)
-    return re.sub("[\u00ad]+","",text)
+    return regexClean(text).lower()

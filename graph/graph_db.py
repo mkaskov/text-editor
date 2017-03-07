@@ -33,7 +33,7 @@ class GraphDB(object):
             base =  pd.read_sql_query('select * from "learnpair"', con=self.dbengine)
             dropCol = ['id','createddate','userid','input','output']
             [base.drop(x, axis=1, inplace=True) for x in dropCol]
-            base[self.category] = base[self.category].apply(lambda x: tu.removeSamples(x, self.core).strip().lower())
+            base[self.category] = base[self.category].apply(lambda x: tu.removeSamples(x, self.core).lower())
             base = base.drop_duplicates(subset=[self.category])
             self.catBase = base
         except ProgrammingError:
@@ -44,13 +44,11 @@ class GraphDB(object):
         base.drop('id', axis=1, inplace=True)
         base.drop('createddate', axis=1, inplace=True)
         base.drop('userid', axis=1, inplace=True)
-        base[self.category] = base[self.category].apply(lambda x: tu.removeSamples(x, self.core).strip().lower())
+        base[self.category] = base[self.category].apply(lambda x: tu.removeSamples(x, self.core).lower())
 
         base = base.loc[base[self.category] == category]
 
-        # base[self.input] = base[self.input].apply(lambda x: x.strip().lower().rstrip(punctuation))
         base[self.input] = base[self.input].apply(lambda x: tu.prepreGraphText(x))
-        # base[self.input] = base[self.input].apply(lambda x: re.sub("[\s]", " ", x).strip().lower().rstrip(self.simpPunctuation).strip())
         base = base.drop_duplicates(subset=[self.category,self.input])
 
         return base
@@ -60,16 +58,12 @@ class GraphDB(object):
         base.drop('id', axis=1, inplace=True)
         base.drop('createddate', axis=1, inplace=True)
         base.drop('userid', axis=1, inplace=True)
-        base[self.category] = base[self.category].apply(lambda x: tu.removeSamples(x, self.core).strip().lower())
+        base[self.category] = base[self.category].apply(lambda x: tu.removeSamples(x, self.core).lower())
 
         base = base.loc[base[self.category] == category]
 
-        # base[self.input] = base[self.input].apply(lambda x: x.strip().lower().rstrip(punctuation))
-        # base[self.input] = base[self.input].apply(lambda x: re.sub("[\s]", " ", x).strip().lower().rstrip(self.simpPunctuation).strip())
-        # base[self.output] = base[self.output].apply(lambda x: x.strip().rstrip(punctuation))
-
         base[self.input] = base[self.input].apply(lambda x: tu.prepreGraphText(x))
-        base[self.output] = base[self.output].apply(lambda x: re.sub("[\s]+"," ",x).strip())
+        base[self.output] = base[self.output].apply(lambda x: tu.regexClean(x))
         base = base.drop_duplicates(subset=[self.category,self.input,self.output])
 
         return base
