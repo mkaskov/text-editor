@@ -49,6 +49,12 @@ def extractQueryData(request):
     tableRow = re.split(CELL_SPLIT, input_data.strip())
     category = tu.removeSamples(tableRow[text_cell_id-1], core).strip().lower() if text_cell_id >0 else ""
 
+    if not graphDb.isCatExist(category):
+        for i in range(0, text_cell_id):
+            newCat = tu.removeSamples(tableRow[i], core).strip().lower()
+            if graphDb.isCatExist(newCat):
+                category = newCat
+
     if len(category)==0:
         _category, _entity = ner.parse(tableRow[text_cell_id].strip(), 30, cleanTags=False)
 
@@ -68,9 +74,11 @@ def findEntries(category, text):
 
     for i, item in base.iterrows():
         if len(item['input'])>0 and item['input'] in text:
-            indexes = [m.start() for m in re.finditer(item['input'], text)]
-            for x in indexes:
-                finded.append({"pos": x, "item": item['input']})
+            _index = text.find(item['input'])
+            finded.append({"pos": _index, "item": item['input']})
+            # indexes = [m.start() for m in re.finditer(item['input'], text)]
+            # for x in indexes:
+            #     finded.append({"pos": x, "item": item['input']})
 
     return sorted(finded, key=lambda find_: (find_['pos'], len(find_['item'])))
 
