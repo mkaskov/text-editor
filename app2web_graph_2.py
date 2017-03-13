@@ -52,8 +52,9 @@ def extractQueryData(request):
     if not graphDb.isCatExist(category):
         for i in range(0, text_cell_id):
             newCat = tu.removeSamples(tableRow[i], core).strip().lower()
-            if graphDb.isCatExist(newCat):
+            if graphDb.isCatExist(newCat) and len(newCat)>0:
                 category = newCat
+                break
 
     if len(category)==0:
         _category, _entity = ner.parse(tableRow[text_cell_id].strip(), 30, cleanTags=False)
