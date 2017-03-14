@@ -1,10 +1,9 @@
 #! /usr/bin/env python
-# -*- coding: utf-8 -*-
 
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
-from ConfigParser import SafeConfigParser
+import configparser
 import re
 import tensorflow as tf
 import sys
@@ -25,7 +24,8 @@ def getConfig(config_file):
         print("------------------------------------------------------------------------------------------------")
         return None
 
-    parser = SafeConfigParser()
+    #parser = SafeConfigParser()
+    parser = configparser.ConfigParser()
     parser.read(config_file)
 
     _conf_ints = [(key, int(value)) for key, value in parser.items('ints')]
@@ -62,7 +62,7 @@ def getParams():
     value_max_train_data_size = 0
     value_steps_per_checkpoint = 400
     value_default_port = 5002
-    _TTP_WORD_SPLIT = re.compile(ur"ГОСТ\s[\d]+\-?[\d]+|[а-яА-Я]+\/[а-яА-Я\d]+\.{1}[а-яА-Я\d]+\.{1}|[а-яА-Я]+\/\([^()]+\)|[^\s\d.,():]+\d?\/[^\s.,():]+|м{1,2}[\d⁰¹²³⁴⁵⁶⁷⁸⁹]|см[\d⁰¹²³⁴⁵⁶⁷⁸⁹]|дм[\d⁰¹²³⁴⁵⁶⁷⁸⁹]|[a-zA-Zа-яА-ЯёЁ]*[^\s\d.!?,:;()\"\'<>%«»±^…\-*=/\xA0]|[\d()!?\'\"<>%,:;±«»^…\-*=/]|\.{3}|\.{1}")
+    _TTP_WORD_SPLIT = re.compile("ГОСТ\s[\d]+\-?[\d]+|[а-яА-Я]+\/[а-яА-Я\d]+\.{1}[а-яА-Я\d]+\.{1}|[а-яА-Я]+\/\([^()]+\)|[^\s\d.,():]+\d?\/[^\s.,():]+|м{1,2}[\d⁰¹²³⁴⁵⁶⁷⁸⁹]|см[\d⁰¹²³⁴⁵⁶⁷⁸⁹]|дм[\d⁰¹²³⁴⁵⁶⁷⁸⁹]|[a-zA-Zа-яА-ЯёЁ]*[^\s\d.!?,:;()\"\'<>%«»±^…\-*=/\xA0]|[\d()!?\'\"<>%,:;±«»^…\-*=/]|\.{3}|\.{1}")
     _buckets = getDefaultBuckets()
 
 
@@ -74,7 +74,9 @@ def getParams():
         "web":False,
         "reduce_gpu":False,
         "forward_only":False,
-        "connect_to_db":False
+        "connect_to_db":False,
+        'url_database':'None',
+        'window_size':30
     }
 
     # read data from model.ini, if file exist and app flags
@@ -99,8 +101,9 @@ def getParams():
             if "max_train_data_size" in params.keys(): value_max_train_data_size = params["max_train_data_size"]
             if "steps_per_checkpoint" in params.keys(): value_steps_per_checkpoint = params["steps_per_checkpoint"]
             if "buckets" in params.keys(): _buckets = params["buckets"]
-            if "regex" in params.keys():  _TTP_WORD_SPLIT = re.compile(ur''+params["regex"].decode('utf-8'))
+            if "regex" in params.keys():  _TTP_WORD_SPLIT = re.compile(params["regex"])
             if "checkpoints_directory" in params.keys(): value_train_dir = data_dir; value_train_dir+=params["checkpoints_directory"]
+            if "window_size" in params.keys(): app_options['window_size']= params["window_size"]
 
     #set value to TF flags
     tf.app.flags.DEFINE_float("learning_rate", value_learning_rate, "Learning rate.")

@@ -1,5 +1,4 @@
 #! /usr/bin/env python
-# -*- coding: utf-8 -*-
 
 # by Max8mk
 """Binary for training editor models and decoding from them.
@@ -32,14 +31,11 @@ import sys
 import time
 import datetime
 
-from six.moves import xrange  # pylint: disable=redefined-builtin
-
 class Unbuffered:
 
    def __init__(self, stream): self.stream = stream
 
    def write(self, data):
-       if isinstance(data, unicode): data=data.encode('utf-8')
        self.stream.write(data)
        self.stream.flush()
 
@@ -119,6 +115,8 @@ class Core(object):
 
         print ("RegEx patter: ", _TTP_WORD_SPLIT.pattern)
 
+        print ("word window size: ", app_options['window_size'])
+
         print ("Learning rate: ", FLAGS.learning_rate)
 
         print("learning_rate_decay_factor: ", FLAGS.learning_rate_decay_factor)
@@ -189,7 +187,7 @@ class Core(object):
             print('Tokens: ', token_ids)
 
         # Which bucket does it belong to?
-        detect_bucket_array = [b for b in xrange(len(_buckets)) if _buckets[b][0] > len(token_ids)]
+        detect_bucket_array = [b for b in range(len(_buckets)) if _buckets[b][0] > len(token_ids)]
         bucket_id = min(detect_bucket_array) if len(detect_bucket_array) > 0 else len(_buckets) - 1
         # Get a 1-element batch to feed the sentence to the model.
         encoder_inputs, decoder_inputs, target_weights = model.get_batch(
@@ -264,7 +262,7 @@ class Core(object):
               % FLAGS.max_train_data_size)
         dev_set = self.read_data(in_dev, out_dev)
         train_set = self.read_data(in_train, out_train, FLAGS.max_train_data_size)
-        train_bucket_sizes = [len(train_set[b]) for b in xrange(len(_buckets))]
+        train_bucket_sizes = [len(train_set[b]) for b in range(len(_buckets))]
         train_total_size = float(sum(train_bucket_sizes))
 
         print("------------------------------------------------------------------------------------------------")
@@ -278,7 +276,7 @@ class Core(object):
         # to select a bucket. Length of [scale[i], scale[i+1]] is proportional to
         # the size if i-th training bucket, as used later.
         train_buckets_scale = [sum(train_bucket_sizes[:i + 1]) / train_total_size
-                               for i in xrange(len(train_bucket_sizes))]
+                               for i in range(len(train_bucket_sizes))]
 
         # This is the training loop.
         step_time, loss = 0.0, 0.0
@@ -288,7 +286,7 @@ class Core(object):
             # Choose a bucket according to data distribution. We pick a random number
             # in [0, 1] and use the corresponding interval in train_buckets_scale.
             random_number_01 = np.random.random_sample()
-            bucket_id = min([i for i in xrange(len(train_buckets_scale))
+            bucket_id = min([i for i in range(len(train_buckets_scale))
                              if train_buckets_scale[i] > random_number_01])
 
             # Get a batch and make a step.
@@ -317,7 +315,7 @@ class Core(object):
                 model.saver.save(sess, checkpoint_path, global_step=model.global_step)
                 step_time, loss = 0.0, 0.0
                 # Run evals on development set and print their perplexity.
-                for bucket_id in xrange(len(_buckets)):
+                for bucket_id in range(len(_buckets)):
                     encoder_inputs, decoder_inputs, target_weights = model.get_batch(
                         dev_set, bucket_id)
                     _, eval_loss, _ = model.step(sess, encoder_inputs, decoder_inputs,
@@ -349,7 +347,7 @@ class Core(object):
             # Get token-ids for the input sentence.
             token_ids = data_utils.sentence_to_token_ids(sentence, in_vocab, normalize_digits=False,ext_TTP_WORD_SPLIT=_TTP_WORD_SPLIT)
             # Which bucket does it belong to?
-            bucket_id = min([b for b in xrange(len(_buckets))
+            bucket_id = min([b for b in range(len(_buckets))
                              if _buckets[b][0] > len(token_ids)])
             # Get a 1-element batch to feed the sentence to the model.
             encoder_inputs, decoder_inputs, target_weights = model.get_batch(
@@ -363,7 +361,7 @@ class Core(object):
             if data_utils.EOS_ID in outputs:
                 outputs = outputs[:outputs.index(data_utils.EOS_ID)]
             # Print out OUTPUT sentence corresponding to outputs.
-            print((" ".join([rev_out_vocab[output] for output in outputs])).decode("utf-8"))
+            print((" ".join([rev_out_vocab[output] for output in outputs])))
             print("> ", end="")
             sys.stdout.flush()
             sentence = sys.stdin.readline()
@@ -380,7 +378,7 @@ class Core(object):
         # Fake data set for both the (3, 3) and (6, 6) bucket.
         data_set = ([([1, 1], [2, 2]), ([3, 3], [4]), ([5], [6])],
                     [([1, 1, 1, 1, 1], [2, 2, 2, 2, 2]), ([3, 3, 3], [5, 6])])
-        for _ in xrange(5):  # Train the fake model for 5 steps.
+        for _ in range(5):  # Train the fake model for 5 steps.
             bucket_id = random.choice([0, 1])
             encoder_inputs, decoder_inputs, target_weights = model.get_batch(
                 data_set, bucket_id)

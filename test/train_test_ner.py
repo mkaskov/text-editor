@@ -1,5 +1,4 @@
 #! /usr/bin/env python
-# -*- coding: utf-8 -*-
 
 from __future__ import absolute_import
 from __future__ import division
@@ -22,7 +21,7 @@ regex = u'\[_K_\]|\[_At_\]|\[\|\|\]|\[\/K\]|\[K\]|\[At\]|\[\/At\]|гост\s[\d.
 WORD_SPLIT = re.compile(regex)
 
 def lenofSentence(t):
-  source = re.sub("[\s\xA0]+", " ", t.decode('utf-8')).strip()
+  source = re.sub("[\s\xA0]+", " ", t).strip()
   words = re.findall(WORD_SPLIT, source)
   return len(words)
 
@@ -73,7 +72,7 @@ def runTest():
 
                     answer = json.load(response)
 
-                    if re.sub("[\s\xA0]+", "", answer['answer']).lower()!=re.sub("[\s\xA0]+", "", contentO[row[0]].decode('utf-8')).lower(): errosArray.append((row[0],answer['answer']))
+                    if re.sub("[\s\xA0]+", "", answer['answer']).lower()!=re.sub("[\s\xA0]+", "", contentO[row[0]]).lower(): errosArray.append((row[0],answer['answer']))
                     else:
                         currLen = inLinesLen[row[0]]
                         for id, bucket in enumerate(buckets):
@@ -98,7 +97,7 @@ def runTest():
 
         text_file.write("\n[Init params------------------------------------------------]\n\n")
         text_file.write("Buckets: %s\n" % str(buckets))
-        text_file.write("Regex: %s\n" % regex.encode('utf-8'))
+        text_file.write("Regex: %s\n" % regex)
 
         text_file.write("\n[Stats -------------------------------------------------------]\n\n")
         text_file.write("Total lines: %s\n" % linesNum)
@@ -116,7 +115,7 @@ def runTest():
             text_file.write("Sentence id: " + str([x[0]]) + "\n")
             text_file.write("Token length of input sentence: " + str(inLinesLen[x[0]])+"\n")
             text_file.write("Input : %(1)s\n" % {"1": re.sub("\n", "", contentI[x[0]])})
-            text_file.write("Answer: %(1)s\n" % {"1": re.sub("\n", "", x[1].encode('utf-8'))})
+            text_file.write("Answer: %(1)s\n" % {"1": re.sub("\n", "", x[1])})
             text_file.write("\n------------------------------------------\n\n")
 
         text_file.write("\n[Section with errors------------------------------------------]\n\n")
@@ -125,7 +124,7 @@ def runTest():
             text_file.write("Token length of input sentence: " + str(inLinesLen[x[0]]) + "\n")
             text_file.write("Input : %(1)s\n" % {"1": re.sub("\n", "", contentI[x[0]])})
             text_file.write("Output: %(1)s\n" % {"1": re.sub("\n", "", contentO[x[0]])})
-            text_file.write("Answer: %(1)s\n" % {"1": re.sub("\n", "", x[1].encode('utf-8'))})
+            text_file.write("Answer: %(1)s\n" % {"1": re.sub("\n", "", x[1])})
             text_file.write("\n------------------------------------------\n\n")
 
         print("Results saved to: %(1)s:" % {"1":fileToWrite})

@@ -1,5 +1,4 @@
 #! /usr/bin/env python
-# -*- coding: utf-8 -*-
 # by Max8mk
 
 """ONLY for start app flask for web decoding data.
@@ -44,7 +43,7 @@ def batch_recognition(sentences):
             if '[LI]' in s: answer.write('[LI]'); s = s[4:]
             print ("------------------------------- Start recogintion -----------------------------------------")
             outputs, rev_out_vocab =  core.recognition(s)
-            orig_val = (" ".join([rev_out_vocab[output] for output in outputs])).decode("utf-8")
+            orig_val = (" ".join([rev_out_vocab[output] for output in outputs]))
             print("Output sentence: ", orig_val)
             s = tU.buildRetValue(outputs, rev_out_vocab)
             s = tU.removeSpaces(s)

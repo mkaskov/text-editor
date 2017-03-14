@@ -13,13 +13,13 @@ if len(sys.argv) == 5: prepare = sys.argv[4]
 else: prepare="false"
 
 def base_prepare():
-    filesToWrite = ["web_NERparser.sh","train.sh"]
+    filesToWrite = ["web_GraphParser_2.sh","train.sh"]
 
     for fileName in filesToWrite:
         with open(fileName, "r") as myfile: s = myfile.read()
 
         ret = re.sub("data_dir=[\S]+", "data_dir="+datasetFolder, s)
-        ret = re.sub("python /home/user/Documents/editor/app2web_ner.py", "python app2web_ner.py --fixdataset=true", ret)
+        ret = re.sub("python3 app2web_graph_2.py", "python3 app2web_graph_2.py --fixdataset=true", ret)
         ret = re.sub("--port=\d+", "--port="+editorPort, ret)
         ret = re.sub("url_database=[\S]+", "url_database=ttpuser:ttppassword@db:5432/ttp", ret)
         if editorMode=="gpu": ret = re.sub("--usegpu=\S+", "--usegpu=true", ret)

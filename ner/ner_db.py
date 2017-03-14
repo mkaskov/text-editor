@@ -1,5 +1,4 @@
 #! /usr/bin/env python
-# -*- coding: utf-8 -*-
 # by PureMind
 
 from __future__ import absolute_import
@@ -9,7 +8,6 @@ from __future__ import print_function
 from sqlalchemy.exc import ProgrammingError
 
 from util import textUtil as tu
-from nnet import data_utils as du
 import re
 from sqlalchemy import create_engine
 import datetime
@@ -29,10 +27,13 @@ class NerDB(object):
     global url_database
     global connectToDdBool
 
-    def __init__(self,url_database,core,connectToDdBool):
+    global isGraph
+
+    def __init__(self,url_database,core,connectToDdBool=False,isGraph=False):
         self.core = core
         self.maxLenChar = 0
         self.setParameters(url_database,connectToDdBool)
+        self.isGraph = isGraph
         self.reConnectToDb()
 
     def setParameters(self,url_database,connectToDdBool=False):
@@ -40,31 +41,43 @@ class NerDB(object):
         self.url_database = url_database
 
     def reConnectToDb(self):
+        self.category = "category"
+        self.input = "input"
+        self.output = "output"
+
         if self.connectToDdBool:
-            self.category = "category"
-            self.input = "input"
-            self.output = "output"
             self.connectToDB('postgresql://'+self.url_database)
         else:
-            self.category = "category"
-            self.input = "in"
-            self.output = "out"
             self.connectToExel(self.url_database)
 
         self.prepareBase()
-        self.maxLenChar = self.base[self.input].map(lambda x: len(x.decode("utf-8"))).max()
+        self.maxLenChar = self.base[self.input].map(lambda x: len(x)).max()
         print (datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),"[URL DATABASE]",self.url_database)
         print (datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),"[CONNECT TO DB]",self.connectToDdBool)
 
     def initEmptyDB(self):
         self.base = pd.DataFrame(columns=[self.category,self.input,self.output])
 
+    def getRaw(self,text):
+        if self.isGraph:
+            return tu.getRawSpace(text, self.core)
+        else:
+            return tu.getRaw(text, self.core)
+
     def prepareBase(self):
         self.base['orig'] = self.base[self.input]
         self.base = self.base.fillna(value='')
-        self.base[self.input] = self.base[self.input].apply(lambda x: tu.getRaw(x.encode("utf-8"), self.core))
-        self.base['orig'] = self.base['orig'].apply(lambda x: re.sub("[\s]+", " ", x.encode("utf-8")))
-        self.base[self.category] = self.base[self.category].apply(lambda x: tu.getRaw(x.encode("utf-8"), self.core))
+        self.base[self.input] = self.base[self.input].apply(lambda x: self.getRaw(x))
+        self.base['orig'] = self.base['orig'].apply(lambda x: re.sub("[\s]+", " ", x))
+        self.base[self.category] = self.base[self.category].apply(lambda x: self.getRaw( tu.removeSamples(x,  self.core).strip()))
+        self.base[self.output] = self.base[self.output].apply(lambda x: tu.prepareSuperscript(x))
+
+        if self.isGraph:
+            # print ("self.base",len(self.base))
+            self.base = self.base.drop_duplicates(subset=['category','input'])
+            # print("temp_baze",len(temp_baze))
+        else:
+            self.base = self.base.drop_duplicates(subset=['category', 'input','output'])
 
     def connectToExel(self, url_database):
         self.base = pd.read_excel(url_database, sheetname=0, header=None, names=[self.category, self.input, self.output])
@@ -80,9 +93,6 @@ class NerDB(object):
         except ProgrammingError:
             self.initEmptyDB()
 
-    def getRaw(self,text):
-        return "".join([x for x in du.tokenizer_tpp(text, self._TTP_WORD_SPLIT) if x not in tu.dotsArrEntity])
-
     def searchBaseInField(self,type, text):
         return self.base.loc[self.base[type] == text]
 
@@ -92,10 +102,10 @@ class NerDB(object):
         return base[base[type].str.contains(text, na=False)]
 
     def search(self, category, entity, strong=True):
-        entity = [{"entity": x, "answer": ""} for x in entity]
+        entity = [{"entity": x, "answer": []} for x in entity]
 
         category = tu.removeSamples(category,  self.core).strip()
-        category = tu.getRaw(category,  self.core)
+        category = self.getRaw(category)
 
         if len(category.strip()) > 0:
             finalBase = self.searchBaseInField(self.category, category)
@@ -104,14 +114,19 @@ class NerDB(object):
             return entity
 
         for row in entity:
-            result = self.searchBaseInFieldCust(self.input, finalBase, tu.getRaw(row["entity"],self.core),strong)
-            if len(result) > 0: row["answer"] = [item[self.output].encode("utf-8") for i, item in result.iterrows()]
+            result = self.searchBaseInFieldCust(self.input, finalBase, self.getRaw(row["entity"]),strong)
+            if len(result) > 0: row["answer"] = [item[self.output] for i, item in result.iterrows()]
         return entity
+
+    def getBaseByCat(self, category):
+        category = tu.removeSamples(category, self.core).strip()
+        category = self.getRaw(category)
+        return self.searchBaseInField(self.category, category)
 
     def isInputExist(self,type, text):
         if type == self.category:
             text = tu.removeSamples(text, self.core).strip()
-        text = tu.getRaw(text, self.core)
+        text = self.getRaw(text)
 
         if len(text) == 0: return False
         result = self.searchBaseInField(type, text)

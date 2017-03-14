@@ -1,23 +1,23 @@
 #! /usr/bin/env python
-# -*- coding: utf-8 -*-
 # by Max8mk
 
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import urllib
+import urllib.parse
 import re
 from .switch import switch
-from cStringIO import StringIO
-from nnet import data_utils as du
+from io import StringIO
+from string import punctuation
 
 afterSpace = ['.', ',',':',')','%']
 beforSpace = ['°','(']
 emptyStr = ['.','','[newline]']
 dotsArr = [".",",","!","?",":",";","мм","и"]
 dotsArrSpace = ["мм","и"]
-dotsArrEntity = [".",",","!","?",":",";","(",")","°","/","\\","-","-","°","и"]
+# dotsArrEntity = [".",",","!","?",":",";","(",")","°","/","\\","-","-","°","и"]
+dotsArrEntity = [".",",","!","?",":",";","(",")","/","\\","-","-","и"]
 
 pJoinSent = re.compile(u'\.[А-Я]')
 
@@ -36,7 +36,7 @@ def JoinSent(str):
 
 def sent_splitter(source):
   source = decode_from_java(source)
-  source = prepare_encode(source.decode('utf-8')+" ")
+  source = prepare_encode(source+" ")
   source = replace_celsius(source)
   sentences = []
 
@@ -50,7 +50,7 @@ def sent_splitter(source):
 
   SPLIT = re.compile("\. |\n")
   sentences.extend(re.split(SPLIT, source))
-  return [s.encode('utf-8') for s in sentences if s.strip() not in emptyStr]
+  return [s for s in sentences if s.strip() not in emptyStr]
 
 def replace_celsius(t):
     return t.replace(' 0С', ' °С')
@@ -60,11 +60,9 @@ def prepare_encode(t):
 
 def prepare_decode(t): return t.replace('[newline]', '').replace('[threedot]', '...').replace('[dot]', '. ')
 
-def decode_from_java(s): return urllib.unquote(s.encode('utf8'))
+def decode_from_java(s): return urllib.parse.unquote(s)
 
-def printArr(ar): [print(e) for e in ar]
-
-def removeSpaces(t): return re.sub("[\s\xA0]+", " ", t.decode('utf-8')).encode('utf-8').strip()
+def removeSpaces(t): return re.sub("[\s\xA0]+", " ", t).strip()
 
 def buildRetValue(outputs,vocab):
     retValue = StringIO()
@@ -114,15 +112,74 @@ def getWordState(id,outputs,vocab,word):
     else: return 'default'
 
 def getRaw(text, core):
-    return "".join([x for x in du.tokenizer_tpp(text, core._TTP_WORD_SPLIT) if x not in dotsArrEntity])
+    text = prepareSuperscript(text)
+    text =  "".join([x for x in tokenizer_tpp(text, core._TTP_WORD_SPLIT) if x not in dotsArrEntity])
+    return prepareCelsius(text)
+
+def getRawSpace(text, core):
+    text = prepareSuperscript(text)
+    text =  " ".join([x for x in tokenizer_tpp(text, core._TTP_WORD_SPLIT) if x not in dotsArrEntity])
+    return prepareCelsius(text)
 
 def getSplitted(text,core):
-    return " ".join([x for x in du.tokenizer_tpp(text, core._TTP_WORD_SPLIT)])
+    return " ".join([x for x in tokenizer_tpp(text, core._TTP_WORD_SPLIT)])
 
 def removeSamples(text,core):
+    text = regexClean(text)
+
     for sample in excludeSamples:
         sample = getSplitted(sample,core)
         text = re.sub(sample, " ", text)
     for sample in ecludeRegexSamples:
         text = re.sub(sample+"\s(\d\s)+\d+|"+sample+"\s(\d\s)+|"+sample+"\s(\d)+", " ", text)
-    return re.sub("[\s]+", " ", text)
+
+    return text.rstrip(punctuation).strip()
+
+def prepareSuperscript(text):
+    supSymbols = ['⁰','¹','²','³','⁴','⁵','⁶','⁷','⁸','⁹']
+    supWord = ['/м','/мм',"/см","/дм"]
+    supWord_v2 = ['м','мм',"см","дм"]
+
+    text = re.sub("\s[0oOоО][СC]", "°C", text)
+    text = re.sub("\)\s?[0oOоО][СC]", ") °C", text)
+
+    for i in range(10):
+        for word in supWord:
+            text = re.sub(word+str(i), word+supSymbols[i], text)
+        for word in supWord_v2:
+            text = re.sub("\s"+word + str(i), word + supSymbols[i], text)
+        text = re.sub(str(i)+"[0oOоО][СC]", str(i)+"°C", text)
+        text = re.sub('\*\s?1\s?0\s?-\s?' + str(i), '*10-' + supSymbols[i], text)
+    return text
+
+def prepareCelsius(text):
+    return re.sub("°[СC]", "°C", text)
+
+
+
+# Регулярные выражения, используемые для создания токенов (tokenize).
+_WORD_SPLIT = re.compile("([,.][ ]+|[!?\"':;)(])") # v2 (not tested)
+_DIGIT_RE = re.compile(r"\d")
+
+_TTP_WORD_SPLIT = None
+
+def basic_tokenizer(sentence): #"""Very basic tokenizer: split the sentence into a list of tokens."""
+  words = []
+  for space_separated_fragment in sentence.strip().split():
+    words.extend(re.split(_WORD_SPLIT, space_separated_fragment))
+  return [w for w in words if w]
+
+def tokenizer_tpp(t, _tokens):
+  words = re.findall(_tokens, t)
+  return [w for w in words if w]
+
+def regexClean(text):
+    if isinstance(text, str):
+        text = re.sub("[\u200B\u00AD\uFEFF\u200D\u200C\u2060]+","",text)
+        text = re.sub("[\s\u202F\u2007\u2009\u200A\u00A0]+"," ",text)
+        return text.strip()
+    else:
+        return text
+
+def prepreGraphText(text):
+    return regexClean(text).lower()
