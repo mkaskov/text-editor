@@ -10,7 +10,6 @@ class GraphDB(object):
 
     global core
     global dbengine
-    global catBase
 
     global category
     global input
@@ -30,12 +29,6 @@ class GraphDB(object):
     def connectToDB(self,url_database):
         try:
             self.dbengine = create_engine('postgresql://'+url_database)
-            base =  pd.read_sql_query('select * from "learnpair"', con=self.dbengine)
-            dropCol = ['id','createddate','userid','input','output']
-            [base.drop(x, axis=1, inplace=True) for x in dropCol]
-            base[self.category] = base[self.category].apply(lambda x: tu.removeSamples(x, self.core).lower())
-            base = base.drop_duplicates(subset=[self.category])
-            self.catBase = base
         except ProgrammingError:
             exit(127)
 
@@ -87,4 +80,7 @@ class GraphDB(object):
         return entity
 
     def isCatExist(self,category):
-        return len(self.catBase.loc[self.catBase[self.category] == category])>0
+        base = pd.read_sql_query(
+            'select count(*)>0  as exist from "learnpair" where LOWER(category) like {}'.format("'%%" + category + "%%'"),
+            con=self.dbengine)
+        return base['exist'][0]
