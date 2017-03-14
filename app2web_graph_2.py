@@ -75,11 +75,13 @@ def findEntries(category, text):
 
     for i, item in base.iterrows():
         if len(item['input'])>0 and item['input'] in text:
-            _index = text.find(item['input'])
-            finded.append({"pos": _index, "item": item['input']})
-            # indexes = [m.start() for m in re.finditer(item['input'], text)]
-            # for x in indexes:
-            #     finded.append({"pos": x, "item": item['input']})
+            # _index = text.find(item['input'])
+            # finded.append({"pos": _index, "item": item['input']})
+            indexes = [m.start() for m in re.finditer(re.escape(item['input']), text)]
+            if len(indexes) == 0:
+                indexes = [text.find(item['input'])]
+            for x in indexes:
+                finded.append({"pos": x, "item": item['input']})
 
     return sorted(finded, key=lambda find_: (find_['pos'], len(find_['item'])))
 
