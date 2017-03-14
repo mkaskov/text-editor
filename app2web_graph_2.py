@@ -52,7 +52,7 @@ def extractQueryData(request):
     if not graphDb.isCatExist(category):
         for i in range(0, text_cell_id):
             newCat = tu.removeSamples(tableRow[i], core).strip().lower()
-            if len(newCat)>0:
+            if len(newCat)>0 and not newCat.isdigit():
                 if graphDb.isCatExist(newCat):
                     category = newCat
                     break
