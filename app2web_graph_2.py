@@ -47,6 +47,9 @@ def extractQueryData(request):
     input_data, text_cell_id = getQueryData(request)
     CELL_SPLIT = re.compile("\[\|\|\]")
     tableRow = re.split(CELL_SPLIT, input_data.strip())
+
+    text = tu.regexClean(tableRow[text_cell_id])
+
     category = tu.removeSamples(tableRow[text_cell_id-1], core).strip().lower() if text_cell_id >0 else ""
 
     if not graphDb.isCatExist(category):
@@ -58,14 +61,27 @@ def extractQueryData(request):
                     break
 
     if len(category)==0:
-        _category, _entity = ner.parse(tableRow[text_cell_id].strip(), 30, cleanTags=False)
+        catbase,maxLen = graphDb.getCategoryList()
 
-        if len(_category)>0:
-            _category = tu.removeSamples(_category[0][0], core).strip().lower()
-            if graphDb.isCatExist(_category):
-                category = _category
+        cat_search = text[0:maxLen+10].lower()
 
-    text = tu.regexClean(tableRow[text_cell_id])
+        finded = []
+
+        for i,item in catbase.iterrows():
+            if item['category'] in cat_search:
+                index = cat_search.find(item['category'])
+                finded.append({"pos":index,"item":item['category']})
+
+        finded = sorted(finded, key=lambda find_: (find_['pos'], len(find_['item'])))
+
+        for x in finded:
+            if x['pos']==0:
+                category = x['item']
+            elif len(category)>0:
+                break
+            else:
+                category = x['item']
+                break
 
     return category, text
 

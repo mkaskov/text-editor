@@ -84,3 +84,20 @@ class GraphDB(object):
             'select count(*)>0  as exist from "learnpair" where LOWER(category) like {}'.format("'%%" + category + "%%'"),
             con=self.dbengine)
         return base['exist'][0]
+
+    def getCategoryList(self):
+        base = pd.read_sql_query(
+            'select lower(category) as category from "learnpair" where length(category)>0 group by category order by category',
+            con=self.dbengine)
+
+        base[self.category] = base[self.category].apply(lambda x: tu.removeSamples(x, self.core).lower().rstrip(self.simpPunctuation))
+        base = base.drop_duplicates(subset=[self.category])
+
+        maxLen = 0
+
+        for i, item in base.iterrows():
+            currLen = len(item['category'])
+            if currLen > maxLen:
+                maxLen = currLen
+
+        return base,maxLen
