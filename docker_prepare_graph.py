@@ -21,7 +21,7 @@ def base_prepare():
         ret = re.sub("data_dir=[\S]+", "data_dir="+datasetFolder, s)
         ret = re.sub("python3 app2web_graph_2.py", "python3 app2web_graph_2.py --fixdataset=true", ret)
         ret = re.sub("--port=\d+", "--port="+editorPort, ret)
-        ret = re.sub("url_database=[\S]+", "url_database=ttpuser:ttppassword@db:5432/ttp", ret)
+        ret = re.sub("url_database=[\S]+", "url_database=db:5432/ttp", ret)
         if editorMode=="gpu": ret = re.sub("--usegpu=\S+", "--usegpu=true", ret)
         elif editorMode=="cpu": ret = re.sub("--usegpu=\S+", "--usegpu=false", ret)
 

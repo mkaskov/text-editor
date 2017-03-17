@@ -1,20 +1,30 @@
+import argparse
+import re
+
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from util import textUtil as tu
-
 from graph import graph_db as GraphDB
-from string import punctuation
-import re
-import docker_prepare
-from ner import ner
-from nnet import initialization, core
 from graph import graph
+from string import punctuation
 
 app = Flask(__name__)
 CORS(app)
+parser = argparse.ArgumentParser()
 
 global core
 global graphDb
+
+parser.add_argument('--url_database')
+parser.add_argument('--port')
+
+_TTP_WORD_SPLIT = "\[_K_\]|\[_At_\]|\[\|\|\]|\[\/K\]|\[K\]|\[At\]|\[\/At\]|гост\s[\d.]+—?\-?[\d]+|ГОСТ\s[\d.]+—?\-?[\d]+|[а-яА-Я]+\/[а-яА-Я\d]+\.{1}[а-яА-Я\d]+\.{1}|[а-яА-Я]+\/\([^()]+\)|[^\s\d.,!?():;/\\|<>\"\'=–—\-+_*\xA0IV\[\]≥≤~”“_ₒ∙°··\x23«»]+\d?\/[^\s.,!?():;/\\|<>\"\'=–—\-+_*\xA0IV\[\]≥≤~”“_ₒ∙°··\x23«»]+|м{1,2}[\d⁰¹²³⁴⁵⁶⁷⁸⁹]|см[\d⁰¹²³⁴⁵⁶⁷⁸⁹]|дм[\d⁰¹²³⁴⁵⁶⁷⁸⁹]|[a-zA-Zа-яА-ЯёЁ]*[^\s\d.\\!?,:;()\"\'<>%«»±^…–—\-*=/+\xA0@·∙\[\]°ₒ”“·≥≤~_\x23]|[\d()\\!?\'\"<>%,:;±«»^…–—\-*=/+@·∙\[\]°ₒ”“·≥≤~_\x23]|\.{3}|\.{1}"
+
+class Core(object):
+    global _TTP_WORD_SPLIT
+
+    def __init__(self, _TTP_WORD_SPLIT_STRING):
+        self._TTP_WORD_SPLIT = re.compile(_TTP_WORD_SPLIT_STRING)
 
 def isResolved(entity):
     for item in entity:
@@ -268,9 +278,9 @@ def parse_search():
         return jsonify(answer=answer.get_data(as_text=True))
 
 if __name__ == "__main__":
-    FLAGS, _TTP_WORD_SPLIT, _buckets, app_options = initialization.getParams()
-    if app_options["fixdataset"]: docker_prepare.fix_dataset()
-    core = core.Core(FLAGS, _TTP_WORD_SPLIT, _buckets, app_options)
-    ner.setGlobalCore(core)
-    graphDb = GraphDB.GraphDB(app_options["url_database"], core)
-    app.run(host='0.0.0.0', port=FLAGS.port, debug=True, use_reloader=False, threaded=False)
+    args = parser.parse_args()
+    core = Core(_TTP_WORD_SPLIT)
+    graphDb = GraphDB.GraphDB(args.url_database, core)
+    print("Starting ner parser")
+    print("url_database:",args.url_database)
+    app.run(host='0.0.0.0', port=int(args.port), debug=True, use_reloader=False, threaded=False)
