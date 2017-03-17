@@ -33,6 +33,8 @@ class GraphDB(object):
             exit(127)
 
     def queryByCategory(self,category):
+        category = re.sub("%", "%%", category)
+
         base = pd.read_sql_query('select * from "learnpair" where LOWER(category) like {}'.format("'%%"+category+"%%'"), con=self.dbengine)
         base.drop('id', axis=1, inplace=True)
         base.drop('createddate', axis=1, inplace=True)
@@ -47,6 +49,8 @@ class GraphDB(object):
         return base
 
     def queryByCategoryDropDuplicates(self,category):
+        category = re.sub("%", "%%", category)
+
         base = pd.read_sql_query('select * from "learnpair" where LOWER(category) like {}'.format("'%%"+category+"%%'"), con=self.dbengine)
         base.drop('id', axis=1, inplace=True)
         base.drop('createddate', axis=1, inplace=True)
@@ -80,6 +84,8 @@ class GraphDB(object):
         return entity
 
     def isCatExist(self,category):
+        category = re.sub("%","%%",category)
+
         base = pd.read_sql_query(
             'select count(*)>0  as exist from "learnpair" where LOWER(category) like {}'.format("'%%" + category + "%%'"),
             con=self.dbengine)

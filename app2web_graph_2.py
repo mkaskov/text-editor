@@ -1,14 +1,14 @@
-import re
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from util import textUtil as tu
-import networkx as nx
+
 from graph import graph_db as GraphDB
 from string import punctuation
 import re
 import docker_prepare
 from ner import ner
 from nnet import initialization, core
+from graph import graph
 
 app = Flask(__name__)
 CORS(app)
@@ -19,6 +19,11 @@ global graphDb
 def isResolved(entity):
     for item in entity:
         if len(item['answer'])==0: return False
+    return True
+
+def isFullNotResolved(entity):
+    for item in entity:
+        if len(item['answer'])>0: return False
     return True
 
 def isInregrity(source_txt,entity):
@@ -83,7 +88,21 @@ def extractQueryData(request):
                 category = x['item']
                 break
 
-    return category, text
+    #extra search text
+    if text_cell_id>1:
+        extra_text = tableRow[text_cell_id-1:text_cell_id+1]
+        extra_id = 1
+    else:
+        extra_text = [tableRow[text_cell_id]]
+        extra_id = 0
+
+    if text_cell_id+1<len(tableRow):
+        extra_text.append(tableRow[text_cell_id+1])
+
+    for i,item in enumerate(extra_text):
+        extra_text[i] = tu.regexClean(extra_text[i])
+
+    return category, text,extra_text,extra_id
 
 def findEntries(category, text):
     base = graphDb.queryByCategory(category)
@@ -101,37 +120,6 @@ def findEntries(category, text):
                 finded.append({"pos": x, "item": item['input']})
 
     return sorted(finded, key=lambda find_: (find_['pos'], len(find_['item'])))
-
-def getFindedIndexes(str_len,e_list,delta):
-    G = nx.Graph()
-    G.add_node(0)
-    G.add_node(str_len)
-
-    # Добавление обычных переходов
-    for elem in e_list:
-        G.add_edge(elem[0], elem[1], weight=elem[1] - elem[0] - delta)
-
-    # Добавление "нулевых" переходов
-    for (u1,v1) in G.nodes(data='weight'):
-        for (u2,v2) in G.nodes(data='weight'):
-            if u1!=u2:
-                if not(G.has_edge(u1,u2)):
-                    w = 2+abs(u1-u2)**2
-                    G.add_edge(u1,u2, weight=w)
-
-        path_ = nx.dijkstra_path(G, 0, str_len)
-
-    len_path = len(path_)
-
-    findedIndexes = []
-
-    for i in range(len_path):
-        if i+1<len_path:
-            for ind,x in enumerate(e_list):
-                if x[0]==path_[i] and x[1]==path_[i+1]:
-                    findedIndexes.append(ind)
-
-    return findedIndexes
 
 def isEmptyEntity(text):
     curr_test = re.sub("[\s\u00ad]+", "", text)
@@ -151,77 +139,123 @@ def updateEntity(curr_text,entity,categoryBase):
 
     return entity
 
-@app.route('/ner/parse/search', methods=['POST'])
-def parse_search():
+def resolveText(category, text,debug=True):
     delta = 0.01
+    text = tu.prepreGraphText(text)
+    len_text = len(text)
 
-    category,text = extractQueryData(request)
+    finded = findEntries(category, text)
 
-    text_lower = tu.prepreGraphText(text)
+    edges = []
 
-    len_text = len(text_lower)
+    for x in finded:
+        edges.append((x['pos'], x['pos'] + len(x['item'])))
 
-    if len(category)>0:
-        finded = findEntries(category, text_lower)
+    indexes = graph.getFindedIndexes(len_text, edges, delta)
+
+    entity = []
+
+    categoryBase = graphDb.queryByCategoryDropDuplicates(category)
+
+    for index, x in enumerate(indexes):
+        if debug:
+            print (finded[x])
+            print (indexes[index], edges[x])
+
+        curr_text = ""
+
+        if index > 0 and index < len_text and edges[indexes[index]][0] != edges[indexes[index - 1]][1]:
+            curr_text = text[edges[indexes[index - 1]][1]:edges[indexes[index]][0]]
+
+        elif index == 0 and edges[x][0] > 0:
+            curr_text = text[0:edges[x][0]]
+
+        elif index + 1 == len_text:
+            curr_text = text[edges[indexes[-1]][1] + 1:len_text]
+
+        entity = updateEntity(curr_text, entity, categoryBase)
+        entity += graphDb.search(categoryBase, [finded[x]['item']])
+
+    if len(indexes) > 1 and edges[indexes[-1]][1] + 1 <= len_text:
+        curr_text = text[edges[indexes[-1]][1]:len_text]
+        entity = updateEntity(curr_text, entity, categoryBase)
+
+    if len(indexes) == 1 and edges[indexes[0]][1] != len_text:
+        curr_text = text[edges[indexes[0]][1]:len_text]
+        entity = updateEntity(curr_text, entity, categoryBase)
+
+    if len(indexes) == 0:
+        entity += graphDb.search(categoryBase, [text])
+
+    _resolved = isResolved(entity)
+    _integrity = isInregrity(text, entity)
+
+    if debug:
         print ("_____________________________________________________")
-        print ("len finded:",len(finded))
-        print ("len text:",len_text)
+        print ("len finded:", len(finded))
+        print ("len text:", len_text)
         print ()
-        edges = []
-
-        for x in finded:
-            edges.append((x['pos'],x['pos']+len(x['item'])))
-
         print (finded)
         print (edges)
 
-        indexes = getFindedIndexes(len_text,edges,delta)
-
-        entity = []
-
-        categoryBase = graphDb.queryByCategoryDropDuplicates(category)
-
-        for index, x in enumerate(indexes):
-            print (finded[x])
-            print (indexes[index],edges[x])
-
-            curr_text = ""
-
-            if index > 0 and index < len_text and edges[indexes[index]][0] != edges[indexes[index - 1]][1]:
-                curr_text = text[edges[indexes[index - 1]][1]:edges[indexes[index]][0]]
-
-            elif index == 0 and edges[x][0] > 0:
-                curr_text = text[0:edges[x][0]]
-
-            elif index + 1 == len_text:
-                curr_text = text[edges[indexes[-1]][1] + 1:len_text]
-
-            entity = updateEntity(curr_text, entity, categoryBase)
-            entity += graphDb.search(categoryBase, [finded[x]['item']])
-
-        if len(indexes)>1 and edges[indexes[-1]][1]+1<=len_text:
-            curr_text = text[edges[indexes[-1]][1]:len_text]
-            entity = updateEntity(curr_text, entity, categoryBase)
-
-        if len(indexes) == 1 and edges[indexes[0]][1] != len_text:
-            curr_text = text[edges[indexes[0]][1]:len_text]
-            entity = updateEntity(curr_text, entity, categoryBase)
-
-        if len(indexes) == 0:
-            entity += graphDb.search(categoryBase, [text_lower])
-
         # Print stats
-        print ("category:",category)
-        print (text_lower)
+        print ("category:", category)
+        print (text)
         print ()
 
-        _resolved = isResolved(entity)
-        _integrity = isInregrity(text_lower, entity)
-
-        print ("resolved:",_resolved)
-        print ("integrity:",_integrity)
+        print ("resolved:", _resolved)
+        print ("integrity:", _integrity)
         for x in entity:
             print (x)
+
+    return entity,_resolved,_integrity
+
+def resolveTextExtra(category,extra_text,extra_id):
+    entity, _resolved, _integrity = resolveText(category, " ".join(extra_text))
+
+    if len(entity[0]['answer']) > 0:
+        if extra_id == 1:
+            for i, item in enumerate(entity[0]['answer']):
+                _index = item.lower().find(extra_text[0].lower())
+                if _index == 0:
+                    clear_text = item[len(extra_text[0]):len(item)]
+                    entity[0]['answer'][i] = clear_text.strip()
+
+        if extra_id + 1 < len(extra_text):
+            extra_end = extra_text[extra_id + 1].strip()
+            len_end = len(extra_end)
+
+            for i, item in enumerate(entity[0]['answer']):
+                extra_ent = item.strip()
+                len_ent = len(extra_ent)
+                if extra_ent[len_ent - len_end:] == extra_end:
+                    entity[0]['answer'][i] = extra_ent[0:len_ent - len_end]
+
+    if len(entity)>1 and extra_id + 1 < len(extra_text):
+        last_ent = entity[-1]['entity'].strip()
+        if last_ent==extra_text[-1]:
+            entity=entity[:len(entity)-1]
+
+    _resolved = isResolved(entity)
+
+    # print ("extra________________")
+    # print (extra_text)
+    # for x in entity:
+    #     print (x)
+
+    return entity, _resolved, _integrity
+
+@app.route('/ner/parse/search', methods=['POST'])
+def parse_search():
+
+    category,text,extra_text,extra_id = extractQueryData(request)
+
+    if len(category)>0:
+
+        entity, _resolved, _integrity = resolveText(category,text)
+
+        if isFullNotResolved(entity):
+            entity, _resolved, _integrity = resolveTextExtra(category,extra_text,extra_id)
 
         answer = jsonify(_integrity=_integrity, _resolved=_resolved, entity=entity, category=category)
         return jsonify(answer=answer.get_data(as_text=True))
@@ -229,8 +263,8 @@ def parse_search():
     else:
         print ("_______________ERROR____________________")
         print ("category:", category)
-        print (text_lower)
-        answer = jsonify(_integrity=True, _resolved=False, entity=[{"entity": text_lower, "answer": []}], category=category)
+        print (text)
+        answer = jsonify(_integrity=True, _resolved=False, entity=[{"entity": text, "answer": []}], category=category)
         return jsonify(answer=answer.get_data(as_text=True))
 
 if __name__ == "__main__":
