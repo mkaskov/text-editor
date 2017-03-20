@@ -242,8 +242,8 @@ def resolveTextExtra(category,extra_text,extra_id):
                     entity[0]['answer'][i] = extra_ent[0:len_ent - len_end]
 
     if len(entity)>1 and extra_id + 1 < len(extra_text):
-        last_ent = entity[-1]['entity'].strip()
-        if last_ent==extra_text[-1]:
+        last_ent = entity[-1]['entity'].strip().lower()
+        if last_ent==extra_text[-1].lower():
             entity=entity[:len(entity)-1]
 
     _resolved = isResolved(entity)
