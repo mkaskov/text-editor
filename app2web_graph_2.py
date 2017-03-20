@@ -65,15 +65,13 @@ def extractQueryData(request):
 
     text = tu.regexClean(tableRow[text_cell_id])
 
-    category = tu.removeSamples(tableRow[text_cell_id-1], core).strip().lower() if text_cell_id >0 else ""
-
-    if not graphDb.isCatExist(category):
-        for i in range(0, text_cell_id):
-            newCat = tu.removeSamples(tableRow[i], core).strip().lower()
-            if len(newCat)>0 and not newCat.isdigit():
-                if graphDb.isCatExist(newCat):
-                    category = newCat
-                    break
+    category = ""
+    for i in range(0, text_cell_id):
+        newCat = tu.removeSamples(tableRow[i], core).strip().lower()
+        if len(newCat)>0 and not newCat.isdigit():
+            if graphDb.isCatExist(newCat):
+                category = newCat
+                break
 
     if len(category)==0:
         catbase,maxLen = graphDb.getCategoryList()
