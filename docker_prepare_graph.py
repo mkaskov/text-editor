@@ -18,7 +18,7 @@ def base_prepare():
     for fileName in filesToWrite:
         with open(fileName, "r") as myfile: s = myfile.read()
 
-        ret = re.sub("--port\s\d{1,4}", "--port "+editorPort, ret)
+        ret = re.sub("--port\s\d{1,4}", "--port "+editorPort, s)
         ret = re.sub("url_database=[\S]+", "url_database=db:5432/ttp", ret)
 
         print("[File]", fileName, "_________________________________________________________")
