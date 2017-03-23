@@ -87,14 +87,10 @@ def extractQueryData(request):
 
         finded = sorted(finded, key=lambda find_: (find_['pos'], len(find_['item'])))
 
-        for x in finded:
-            if x['pos']==0:
-                category = x['item']
-            elif len(category)>0:
-                break
-            else:
-                category = x['item']
-                break
+        if len(finded)>0:
+            startPos = finded[0]['pos']
+            finded = [x for x in finded if x['pos']==startPos]
+            category = finded[-1]['item']
 
     #extra search text
     if text_cell_id>1:
