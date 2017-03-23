@@ -246,11 +246,6 @@ def resolveTextExtra(category,extra_text,extra_id):
 
     _resolved = isResolved(entity)
 
-    # print ("extra________________")
-    # print (extra_text)
-    # for x in entity:
-    #     print (x)
-
     return entity, _resolved, _integrity
 
 @app.route('/ner/parse/search', methods=['POST'])
