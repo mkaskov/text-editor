@@ -108,20 +108,18 @@ def extractQueryData(request):
 
     return category, text,extra_text,extra_id
 
-def findEntries(category, text):
+def findEntries(category, text,origText):
     base = graphDb.queryByCategory(category)
 
     finded = []
 
     for i, item in base.iterrows():
         if len(item['input'])>0 and item['input'] in text:
-            # _index = text.find(item['input'])
-            # finded.append({"pos": _index, "item": item['input']})
             indexes = [m.start() for m in re.finditer(re.escape(item['input']), text)]
             if len(indexes) == 0:
                 indexes = [text.find(item['input'])]
             for x in indexes:
-                finded.append({"pos": x, "item": item['input']})
+                finded.append({"pos": x, "item": item['input'],"orig_item":origText[x:x+len(item["input"])]})
 
     return sorted(finded, key=lambda find_: (find_['pos'], len(find_['item'])))
 
@@ -130,25 +128,27 @@ def isEmptyEntity(text):
     curr_test = [x for x in curr_test if x not in punctuation]
     return len(curr_test)==0
 
-def updateEntity(curr_text,entity,categoryBase):
+def updateEntity(curr_text,orig_text,entity,categoryBase):
     if len(curr_text)==0:
         return entity
 
     if isEmptyEntity(curr_text) and len(entity) > 0:
         entity[-1]['entity'] = entity[-1]['entity'] + curr_text
+        entity[-1]['orig'] = entity[-1]['orig'] + orig_text
         for index_a, answer in enumerate(entity[-1]['answer']):
             entity[-1]['answer'][index_a] = entity[-1]['answer'][index_a] + curr_text
     else:
-        entity += graphDb.search(categoryBase, [curr_text])
+        entity += graphDb.search(categoryBase, [curr_text],[orig_text])
 
     return entity
 
-def resolveText(category, text,debug=True):
+def resolveText(category, origText,debug=False):
     delta = 0.01
-    text = tu.prepreGraphText(text)
+    origText = tu.regexClean(origText)
+    text = tu.prepreGraphText(origText)
     len_text = len(text)
 
-    finded = findEntries(category, text)
+    finded = findEntries(category, text,origText)
 
     edges = []
 
@@ -167,29 +167,38 @@ def resolveText(category, text,debug=True):
             print (indexes[index], edges[x])
 
         curr_text = ""
+        corig_text = ""
 
         if index > 0 and index < len_text and edges[indexes[index]][0] != edges[indexes[index - 1]][1]:
             curr_text = text[edges[indexes[index - 1]][1]:edges[indexes[index]][0]]
+            corig_text = origText[edges[indexes[index - 1]][1]:edges[indexes[index]][0]]
 
         elif index == 0 and edges[x][0] > 0:
             curr_text = text[0:edges[x][0]]
+            corig_text = origText[0:edges[x][0]]
 
         elif index + 1 == len_text:
             curr_text = text[edges[indexes[-1]][1] + 1:len_text]
+            corig_text = origText[edges[indexes[-1]][1] + 1:len_text]
 
-        entity = updateEntity(curr_text, entity, categoryBase)
-        entity += graphDb.search(categoryBase, [finded[x]['item']])
+        entity = updateEntity(curr_text,corig_text, entity, categoryBase)
+
+        entity += graphDb.search(categoryBase, [finded[x]['item']],[finded[x]['orig_item']])
 
     if len(indexes) > 1 and edges[indexes[-1]][1] + 1 <= len_text:
         curr_text = text[edges[indexes[-1]][1]:len_text]
-        entity = updateEntity(curr_text, entity, categoryBase)
+        corig_text = origText[edges[indexes[-1]][1]:len_text]
+
+        entity = updateEntity(curr_text,corig_text, entity, categoryBase)
 
     if len(indexes) == 1 and edges[indexes[0]][1] != len_text:
         curr_text = text[edges[indexes[0]][1]:len_text]
-        entity = updateEntity(curr_text, entity, categoryBase)
+        corig_text = origText[edges[indexes[0]][1]:len_text]
+
+        entity = updateEntity(curr_text,corig_text, entity, categoryBase)
 
     if len(indexes) == 0:
-        entity += graphDb.search(categoryBase, [text])
+        entity += graphDb.search(categoryBase, [text],[origText])
 
     _resolved = isResolved(entity)
     _integrity = isInregrity(text, entity)

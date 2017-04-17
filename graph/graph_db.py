@@ -73,8 +73,11 @@ class GraphDB(object):
             return base
         return base[base[type].str.contains(text, na=False)]
 
-    def search(self,categoryBase,entity,strong=True):
-        entity = [{"entity": x, "answer": []} for x in entity]
+    def search(self,categoryBase,entity_data,orig_entity,strong=True):
+        entity = []
+
+        for i in range(len(entity_data)):
+            entity.append({"entity":entity_data[i],"orig":orig_entity[i],"answer":[]})
 
         for row in entity:
             _rowdata = row["entity"].lower()
