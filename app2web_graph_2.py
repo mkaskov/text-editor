@@ -68,7 +68,8 @@ def extractQueryData(request):
     category = ""
     for i in range(0, text_cell_id):
         newCat = tu.removeSamples(tableRow[i], core).strip().lower()
-        if len(newCat)>0 and not newCat.isdigit():
+        catDigit = re.sub("["+punctuation+"]+","",newCat)
+        if len(newCat)>0 and not catDigit.isdigit():
             if graphDb.isCatExist(newCat):
                 category = newCat
                 break
